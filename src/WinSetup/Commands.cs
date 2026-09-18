@@ -93,13 +93,14 @@ public static class Commands
         var rebootRequired = false;
 
         Console.WriteLine("== settings ==");
+        var unchanged = 0;
         foreach (var setting in Setting.All)
         {
             try
             {
                 if (setting.Check() == SettingState.Matches)
                 {
-                    Console.WriteLine($"ok    {setting.Why}");
+                    unchanged++;
                     continue;
                 }
 
@@ -136,6 +137,8 @@ public static class Commands
                 Console.WriteLine($"FAIL  {setting.Why} ({exception.Message})");
             }
         }
+
+        Console.WriteLine($"ok    {unchanged} settings already correct");
 
         if (colorStoreChanged)
         {
@@ -186,22 +189,46 @@ public static class Commands
         }
 
         Console.WriteLine("== packages ==");
+        Console.WriteLine("      checking installed packages...");
+        var present = new List<string>();
+        var missing = new List<Package>();
         foreach (var package in Packages.All)
         {
             try
             {
                 if (Packages.IsPresent(Packages.Classify(Runner.Run(Paths.Winget, package.DetectArgs).ExitCode)))
                 {
-                    Console.WriteLine($"ok    {package.Name}");
-                    continue;
+                    present.Add(package.Name);
                 }
+                else
+                {
+                    missing.Add(package);
+                }
+            }
+            catch (Exception exception)
+            {
+                failures.Add($"package: {package.Name} ({exception.Message})");
+                Console.WriteLine($"FAIL  {package.Name} ({exception.Message})");
+            }
+        }
 
+        if (present.Count > 0)
+        {
+            Console.WriteLine($"ok    already installed: {string.Join(", ", present)}");
+        }
+
+        foreach (var package in missing)
+        {
+            try
+            {
                 Console.WriteLine($"inst  {package.Name}");
-                var install = Runner.RunStreaming(Paths.Winget, package.InstallArgs());
-                var result = Packages.Classify(install.ExitCode);
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs());
+                stopwatch.Stop();
+                var result = Packages.Classify(exit);
                 if (Packages.IsPresent(result))
                 {
-                    Console.WriteLine($"done  {package.Name}");
+                    Console.WriteLine($"done  {package.Name} ({stopwatch.Elapsed.TotalSeconds:0}s)");
                     if (result == WingetResult.RebootRequired)
                     {
                         rebootRequired = true;
@@ -210,12 +237,9 @@ public static class Commands
                 }
                 else
                 {
-                    failures.Add($"package: {package.Name} ({install.Hex})");
-                    Console.WriteLine($"FAIL  {package.Name} ({install.Hex})");
-                    if (!string.IsNullOrWhiteSpace(install.StdErr))
-                    {
-                        Console.WriteLine($"      {install.StdErr.Trim()}");
-                    }
+                    failures.Add($"package: {package.Name} (0x{unchecked((uint)exit):X8})");
+                    Console.WriteLine($"FAIL  {package.Name} (0x{unchecked((uint)exit):X8})");
+                    Console.WriteLine($"      reproduce: winget install --id {package.Id} --exact");
                 }
             }
             catch (Exception exception)
