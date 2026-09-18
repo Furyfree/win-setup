@@ -45,6 +45,8 @@ public static class Packages
         new("PowerShell 7", "Microsoft.PowerShell"),
         new("Windows Terminal", "Microsoft.WindowsTerminal"),
         new("VSCodium", "VSCodium.VSCodium"),
+        new("Zed", "ZedIndustries.Zed"),
+        new("Brave Origin Nightly", "Brave.BraveOrigin.Nightly"),
         new("Git", "Git.Git"),
         new("GitHub CLI", "GitHub.cli"),
         new("chezmoi", "twpayne.chezmoi"),

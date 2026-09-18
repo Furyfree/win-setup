@@ -43,6 +43,8 @@ unless a game actually needs them.
 | PowerShell 7 | WinGet | `Microsoft.PowerShell` | Package: win-setup, config: Chezmoi |
 | Windows Terminal | WinGet / Windows | `Microsoft.WindowsTerminal` | Package: win-setup, config: Chezmoi |
 | VSCodium | WinGet | `VSCodium.VSCodium` | Package: win-setup, config/extensions: Chezmoi |
+| Zed | WinGet | `ZedIndustries.Zed` | Package: win-setup, config: Chezmoi |
+| Brave Origin Nightly | WinGet | `Brave.BraveOrigin.Nightly` | Only winget channel available for Origin |
 | Git for Windows | WinGet | `Git.Git` | Package: win-setup, config: Chezmoi |
 | GitHub CLI | WinGet | `GitHub.cli` | win-setup |
 | Chezmoi | WinGet | `twpayne.chezmoi` | win-setup bootstrap |
@@ -82,12 +84,11 @@ gaming baseline.
 | EarTrumpet | WinGet | `File-New-Project.EarTrumpet` |
 | LocalSend | WinGet | `LocalSend.LocalSend` |
 | NAPS2 | WinGet | `Cyanfish.NAPS2` |
-| Zed | WinGet | `ZedIndustries.Zed` |
 | Claude | WinGet | `Anthropic.Claude` |
 | ChatGPT | Microsoft Store | `9PLM9XGG6VKS` |
 
-Brave Origin stable and Microsoft 365 require their appropriate official
-distribution/licensing routes rather than guessing a similarly named package.
+Brave Origin has no stable winget package; the Nightly channel is used.
+Microsoft 365 requires its official distribution/licensing route.
 
 ## Startup policy
 
