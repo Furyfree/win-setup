@@ -45,9 +45,10 @@ Fresh install entry point:
 irm https://raw.githubusercontent.com/Furyfree/win-setup/main/bootstrap.ps1 | iex
 ```
 
-It self-elevates, downloads the latest release to `%LOCALAPPDATA%\Programs\win-setup`,
-adds that directory to the user PATH, then runs `status` and `apply`. Open a new
-terminal afterwards and `win-setup status|apply|snapshot` work directly.
+It downloads the latest release to `%LOCALAPPDATA%\Programs\win-setup`, adds
+that directory to the user PATH, runs `status`, then requests elevation for
+`apply`. Open a new terminal afterwards and `win-setup status|apply|snapshot`
+work directly.
 
 ## Build and test
 

@@ -45,6 +45,7 @@ unless a game actually needs them.
 | VSCodium | WinGet | `VSCodium.VSCodium` | Package: win-setup, config/extensions: Chezmoi |
 | Zed | WinGet | `ZedIndustries.Zed` | Package: win-setup, config: Chezmoi |
 | Brave Origin Nightly | WinGet | `Brave.BraveOrigin.Nightly` | Only winget channel available for Origin |
+| Signal | WinGet | `OpenWhisperSystems.Signal` | win-setup |
 | Git for Windows | WinGet | `Git.Git` | Package: win-setup, config: Chezmoi |
 | GitHub CLI | WinGet | `GitHub.cli` | win-setup |
 | Chezmoi | WinGet | `twpayne.chezmoi` | win-setup bootstrap |
@@ -73,7 +74,6 @@ gaming baseline.
 
 | Application | Source | Identifier / route |
 | --- | --- | --- |
-| Signal | WinGet | `OpenWhisperSystems.Signal` |
 | Vesktop | WinGet | `Vencord.Vesktop` |
 | Obsidian | WinGet | `Obsidian.Obsidian` |
 | Spotify | WinGet | `Spotify.Spotify` |

@@ -53,6 +53,7 @@ public static class Packages
         new("1Password", "AgileBits.1Password"),
         new("1Password CLI", "AgileBits.1Password.CLI"),
         new("Tailscale", "Tailscale.Tailscale"),
+        new("Signal", "OpenWhisperSystems.Signal"),
         new("7-Zip", "7zip.7zip"),
         new("Everything", "voidtools.Everything"),
         new(".NET Desktop Runtime 8", "Microsoft.DotNet.DesktopRuntime.8"),
