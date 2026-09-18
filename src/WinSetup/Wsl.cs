@@ -25,6 +25,14 @@ public static class Wsl
         Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
             "test -f \"$HOME/.cache/win-setup-wsl-provisioned\""]).Ok;
 
+    public static bool ShellIsZsh() =>
+        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
+            "test \"$(getent passwd 1000 | cut -d: -f7)\" = /bin/zsh"]).Ok;
+
+    public static RunResult SetZshShell() =>
+        Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "sh", "-c",
+            "chsh -s /bin/zsh \"$(getent passwd 1000 | cut -d: -f1)\""]);
+
     public static RunResult Provision()
     {
         var script = $$"""

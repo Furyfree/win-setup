@@ -297,6 +297,24 @@ public static class Commands
                         Console.WriteLine($"FAIL  wsl provision ({provision.Hex}) {provision.StdErr.Trim()}");
                     }
                 }
+
+                if (Wsl.ShellIsZsh())
+                {
+                    Console.WriteLine("ok    zsh is the WSL login shell");
+                }
+                else
+                {
+                    var shell = Wsl.SetZshShell();
+                    if (shell.Ok)
+                    {
+                        Console.WriteLine("set   zsh is the WSL login shell");
+                    }
+                    else
+                    {
+                        failures.Add($"wsl shell ({shell.Hex})");
+                        Console.WriteLine($"FAIL  wsl shell ({shell.Hex}) {shell.StdErr.Trim()}");
+                    }
+                }
             }
             else if (Wsl.RebootPending())
             {
