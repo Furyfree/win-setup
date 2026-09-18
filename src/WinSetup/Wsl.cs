@@ -35,11 +35,19 @@ public static class Wsl
             dnf install -y chezmoi git zsh
             user=$(getent passwd 1000 | cut -d: -f1)
             home=$(getent passwd 1000 | cut -d: -f6)
+            log="$home/.cache/win-setup-wsl.log"
             if [ ! -f "$home/.config/chezmoi/chezmoi.toml" ]; then
               if [ -d "$home/.local/share/chezmoi" ] && [ ! -d "$home/.local/share/chezmoi/.git" ]; then
                 rm -rf "$home/.local/share/chezmoi"
               fi
-              runuser -u "$user" -- chezmoi init --apply --override-data '{{data}}' https://github.com/Furyfree/dotfiles.git
+              mkdir -p "$home/.cache"
+              chown -R "$user:" "$home/.cache"
+              if ! runuser -u "$user" -- chezmoi init --apply --override-data '{{data}}' https://github.com/Furyfree/dotfiles.git </dev/null >"$log" 2>&1; then
+                echo "chezmoi init failed; last log lines:"
+                tail -30 "$log"
+                exit 1
+              fi
+              tail -3 "$log"
             fi
             """;
         var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(script));
