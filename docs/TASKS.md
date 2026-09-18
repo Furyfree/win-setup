@@ -11,21 +11,23 @@ This is the current work queue. Long-term sequencing belongs in
 - [x] Define the Chezmoi boundary in [CONFIGS.md](CONFIGS.md).
 - [x] Record the actual installation procedure in
       [INSTALLATION.md](INSTALLATION.md).
+- [x] Record the post-CTT registry/service/appx baseline in
+      [SNAPSHOT-2026-09-18.md](SNAPSHOT-2026-09-18.md).
 - [ ] Continue replacing assumptions from the old planning document with facts
       from the new installation.
 
 ## First implementation
 
-- [ ] Decide the exact CLI parsing approach once `status` is implemented.
-- [ ] Implement `win-setup status`.
-- [ ] Detect Windows edition/build.
-- [ ] Detect administrator/elevation state.
-- [ ] Detect Secure Boot.
-- [ ] Detect TPM.
-- [ ] Detect BitLocker system-volume state.
-- [ ] Detect `winget`.
-- [ ] Detect `chezmoi`.
-- [ ] Add tests for logic that does not require a live Windows host.
+- [x] Decide the exact CLI parsing approach once `status` is implemented.
+- [x] Implement `win-setup status`.
+- [x] Detect Windows edition/build.
+- [x] Detect administrator/elevation state.
+- [x] Detect Secure Boot.
+- [x] Detect TPM.
+- [x] Detect BitLocker system-volume state.
+- [x] Detect `winget`.
+- [x] Detect `chezmoi`.
+- [x] Add tests for logic that does not require a live Windows host.
 
 ## Security
 

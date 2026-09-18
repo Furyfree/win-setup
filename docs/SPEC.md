@@ -33,10 +33,12 @@ The planned command surface starts small:
 ```text
 win-setup status
 win-setup apply
+win-setup snapshot
 ```
 
-`status` is read-only. `apply` performs the setup steps owned by this project
-and must be safe to rerun.
+`status` is read-only. `snapshot` is read-only and writes a machine-state
+bundle for review. `apply` performs the setup steps owned by this project and
+must be safe to rerun.
 
 A dry-run or more specialized commands may be added later if they solve a
 concrete problem.
