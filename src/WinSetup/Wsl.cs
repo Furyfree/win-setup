@@ -27,23 +27,39 @@ public static class Wsl
 
     public static RunResult Provision()
     {
-        var data = $$"""
-            {"Machine":"{{Environment.MachineName}}","ManagedByNimbus":false,"onePasswordSsh":false,"Profiles":["development"]}
-            """;
         var script = $$"""
             set -e
             dnf install -y chezmoi git zsh
             user=$(getent passwd 1000 | cut -d: -f1)
             home=$(getent passwd 1000 | cut -d: -f6)
+            machine="{{Environment.MachineName}}"
+            src="$home/.local/share/chezmoi"
+            cfg="$home/.config/chezmoi/chezmoi.toml"
             log="$home/.cache/win-setup-wsl.log"
-            if [ ! -f "$home/.config/chezmoi/chezmoi.toml" ]; then
-              if [ -d "$home/.local/share/chezmoi" ] && [ ! -d "$home/.local/share/chezmoi/.git" ]; then
-                rm -rf "$home/.local/share/chezmoi"
+            mkdir -p "$home/.cache" "$home/.config/chezmoi"
+            chown -R "$user:" "$home/.cache" "$home/.config"
+            if [ ! -f "$cfg" ]; then
+              if [ -d "$src" ] && [ ! -d "$src/.git" ]; then
+                rm -rf "$src"
               fi
-              mkdir -p "$home/.cache"
-              chown -R "$user:" "$home/.cache"
-              if ! runuser -u "$user" -- chezmoi init --apply --override-data '{{data}}' https://github.com/Furyfree/dotfiles.git </dev/null >"$log" 2>&1; then
-                echo "chezmoi init failed; last log lines:"
+              if [ ! -d "$src" ]; then
+                runuser -u "$user" -- git clone --depth 1 https://github.com/Furyfree/dotfiles.git "$src"
+              fi
+              cat > "$cfg" <<EOF
+            [diff]
+            exclude = ["scripts"]
+
+            [data]
+            Machine = "$machine"
+            fastmailUsername = ""
+            ManagedByNimbus = false
+            onePasswordSsh = false
+            Profiles = ["common", "development"]
+            profiles = ["common", "unix", "linux", "development"]
+            EOF
+              chown "$user:" "$cfg"
+              if ! runuser -u "$user" -- chezmoi --no-tty apply </dev/null >"$log" 2>&1; then
+                echo "chezmoi apply failed; last log lines:"
                 tail -30 "$log"
                 exit 1
               fi
