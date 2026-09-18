@@ -38,7 +38,7 @@ Every change is detect -> act -> recheck, so a rerun only writes what differs.
 
 ## Bootstrap
 
-Once the repository is public:
+Fresh install entry point:
 
 ```powershell
 irm https://raw.githubusercontent.com/Furyfree/win-setup/main/bootstrap.ps1 | iex
