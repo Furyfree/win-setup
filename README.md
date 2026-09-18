@@ -43,6 +43,18 @@ newer one exists (v0.1.6 and later).
    Chezmoi stays usable on its own: `chezmoi status`, `chezmoi diff`, and
    `chezmoi apply` work directly.
 
+## WSL
+
+`apply` enables the WSL features (reboot if newly enabled), installs Fedora
+(`FedoraLinux-44`) with systemd as the default distribution, then provisions
+it: chezmoi, git and zsh plus a non-interactive `chezmoi init --apply` with
+the `development` profile. WSL has its own Linux home, independent of the
+Windows Chezmoi setup.
+
+Fedora enforces password quality: if `passwd` inside WSL rejects a password,
+relax it in `/etc/security/pwquality.conf` (`minlen = 1`, `dictcheck = 0`) or
+pick a longer one.
+
 ## Bootstrap
 
 Fresh install entry point:
