@@ -30,6 +30,7 @@ deferred.
 | Visual C++ Redistributable x64 | WinGet | `Microsoft.VCRedist.2015+.x64` | Common game/application runtime |
 | Visual C++ Redistributable x86 | WinGet | `Microsoft.VCRedist.2015+.x86` | Required by many 32-bit game components |
 | NVIDIA driver | Vendor | NVIDIA-supported driver route | Do not replace with a third-party driver updater |
+| NVIDIA App | Microsoft Store | `XP8CLZL93F5Z4P` | Install through WinGet using the Microsoft Store source |
 
 Additional game launchers such as EA app, Epic Games Launcher, and Ubisoft
 Connect are opt-in later. They should not be part of the first fresh baseline
