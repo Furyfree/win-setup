@@ -59,6 +59,7 @@ public static class Packages
         new(".NET Desktop Runtime 8", "Microsoft.DotNet.DesktopRuntime.8"),
         new("EverythingToolbar", "srwi.EverythingToolbar.Launcher"),
         new("PowerToys", "Microsoft.PowerToys"),
+        // new("Windhawk", "RamenSoftware.Windhawk"),
         // new("GlazeWM", "glzr-io.glazewm"),
         // new("Zebar", "glzr-io.zebar"),
     ];

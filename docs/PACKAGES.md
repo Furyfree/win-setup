@@ -59,7 +59,7 @@ unless a game actually needs them.
 | PowerToys | WinGet | `Microsoft.PowerToys` | Package: win-setup; selected config may live in Chezmoi |
 | GlazeWM | WinGet | `glzr-io.glazewm` | Package: win-setup, config: Chezmoi |
 | Zebar | WinGet | `glzr-io.zebar` | Package: win-setup, config: Chezmoi |
-| Windhawk | WinGet | `RamenSoftware.Windhawk` | Install only; no default mod bundle initially |
+| Windhawk | WinGet | `RamenSoftware.Windhawk` | Deferred; commented out in `Packages.cs` |
 
 UniGetUI may be useful as a graphical package-review interface, but it is not
 required for the automated baseline.

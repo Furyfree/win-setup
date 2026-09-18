@@ -17,7 +17,6 @@ public record Setting(
     [
         // Taskbar
         new("Center taskbar icons", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarAl", 1, RegistryValueKind.DWord),
-        new("Auto-hide the taskbar", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3", "Settings", (byte)0x01, RegistryValueKind.Binary, ByteIndex: 8),
         new("Hide the taskbar search box", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Search", "SearchboxTaskbarMode", 0, RegistryValueKind.DWord),
         new("Hide the Task View button", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowTaskViewButton", 0, RegistryValueKind.DWord),
         new("Enable End task on taskbar right-click", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "TaskbarEndTask", 1, RegistryValueKind.DWord),
