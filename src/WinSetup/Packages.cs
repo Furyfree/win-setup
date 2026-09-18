@@ -46,6 +46,7 @@ public static class Packages
         new("Windows Terminal", "Microsoft.WindowsTerminal"),
         new("VSCodium", "VSCodium.VSCodium"),
         new("Zed", "ZedIndustries.Zed"),
+        new("JetBrainsMono Nerd Font", "DEVCOM.JetBrainsMonoNerdFont"),
         new("Brave Origin Nightly", "Brave.BraveOrigin.Nightly"),
         new("Git", "Git.Git"),
         new("GitHub CLI", "GitHub.cli"),

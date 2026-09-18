@@ -44,6 +44,7 @@ unless a game actually needs them.
 | Windows Terminal | WinGet / Windows | `Microsoft.WindowsTerminal` | Package: win-setup, config: Chezmoi |
 | VSCodium | WinGet | `VSCodium.VSCodium` | Package: win-setup, config/extensions: Chezmoi |
 | Zed | WinGet | `ZedIndustries.Zed` | Package: win-setup, config: Chezmoi |
+| JetBrainsMono Nerd Font | WinGet | `DEVCOM.JetBrainsMonoNerdFont` | Font used by Chezmoi terminal/editor configs |
 | Brave Origin Nightly | WinGet | `Brave.BraveOrigin.Nightly` | Only winget channel available for Origin |
 | Signal | WinGet | `OpenWhisperSystems.Signal` | win-setup |
 | Git for Windows | WinGet | `Git.Git` | Package: win-setup, config: Chezmoi |
