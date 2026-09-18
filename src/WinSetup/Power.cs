@@ -35,6 +35,8 @@ public static partial class Power
         return set.Ok ? Runner.Run(Exe, ["/setactive", "SCHEME_CURRENT"]) : set;
     }
 
+    public static RunResult DisableHibernate() => Runner.Run(Exe, ["/hibernate", "off"]);
+
     [GeneratedRegex(@"0x[0-9a-fA-F]{8}")]
     private static partial Regex Hex();
 }

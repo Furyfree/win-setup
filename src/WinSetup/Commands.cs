@@ -89,6 +89,7 @@ public static class Commands
         var failures = new List<string>();
         var taskbarChanged = false;
         var colorStoreChanged = false;
+        var hibernateChanged = false;
         var rebootRequired = false;
 
         Console.WriteLine("== settings ==");
@@ -117,6 +118,11 @@ public static class Commands
                     {
                         colorStoreChanged = true;
                     }
+
+                    if (setting.Name.Equals("HibernateEnabled", StringComparison.Ordinal))
+                    {
+                        hibernateChanged = true;
+                    }
                 }
                 else
                 {
@@ -134,6 +140,11 @@ public static class Commands
         if (colorStoreChanged)
         {
             Notify.SettingsChanged();
+        }
+
+        if (hibernateChanged)
+        {
+            Power.DisableHibernate();
         }
 
         Console.WriteLine("== power ==");
