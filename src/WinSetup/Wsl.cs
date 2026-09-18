@@ -19,7 +19,7 @@ public static class Wsl
         FeatureEnabled("VirtualMachinePlatform") && FeatureEnabled("Microsoft-Windows-Subsystem-Linux");
 
     public static bool DistroInstalled() =>
-        Runner.Run(Exe, ["--list", "--quiet"]).StdOut.Contains("Fedora", StringComparison.OrdinalIgnoreCase);
+        Clean(Runner.Run(Exe, ["--list", "--quiet"])).Contains("Fedora", StringComparison.OrdinalIgnoreCase);
 
     public static bool Provisioned() =>
         Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c", "test -d \"$HOME/.local/share/chezmoi\""]).Ok;
@@ -108,9 +108,12 @@ public static class Wsl
     }
 
     private static string? FirstDistro() =>
-        Runner.Run(Exe, ["--list", "--quiet"]).StdOut
+        Clean(Runner.Run(Exe, ["--list", "--quiet"]))
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
+
+    // ponytail: wsl.exe writes UTF-16; when the pipe decodes as UTF-8 every ASCII char has a NUL byte.
+    private static string Clean(RunResult result) => result.StdOut.Replace("\0", string.Empty);
 
     private static bool FeatureEnabled(string name) =>
         Runner.Run(Dism, ["/online", "/Get-FeatureInfo", $"/FeatureName:{name}"])
