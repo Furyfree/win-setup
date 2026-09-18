@@ -50,6 +50,8 @@ unless a game actually needs them.
 | Tailscale | WinGet | `Tailscale.Tailscale` | win-setup |
 | 7-Zip | WinGet | `7zip.7zip` | win-setup |
 | Everything | WinGet | `voidtools.Everything` | win-setup |
+| EverythingToolbar | WinGet | `srwi.EverythingToolbar.Launcher` | Requires full Everything running |
+| .NET Desktop Runtime 8 | WinGet | `Microsoft.DotNet.DesktopRuntime.8` | Required by EverythingToolbar |
 | PowerToys | WinGet | `Microsoft.PowerToys` | Package: win-setup; selected config may live in Chezmoi |
 | GlazeWM | WinGet | `glzr-io.glazewm` | Package: win-setup, config: Chezmoi |
 | Zebar | WinGet | `glzr-io.zebar` | Package: win-setup, config: Chezmoi |
@@ -57,6 +59,9 @@ unless a game actually needs them.
 
 UniGetUI may be useful as a graphical package-review interface, but it is not
 required for the automated baseline.
+
+GlazeWM and Zebar are deferred until their Chezmoi configuration exists; the
+package rows are commented out in `Packages.cs` for now.
 
 ## Desktop and communication candidates
 

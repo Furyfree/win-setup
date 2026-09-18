@@ -20,17 +20,17 @@ public record Setting(
         new("Auto-hide the taskbar", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3", "Settings", (byte)0x01, RegistryValueKind.Binary, ByteIndex: 8),
         new("Hide the taskbar search box", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Search", "SearchboxTaskbarMode", 0, RegistryValueKind.DWord),
         new("Hide the Task View button", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowTaskViewButton", 0, RegistryValueKind.DWord),
-        new("Hide the Widgets button", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarDa", 0, RegistryValueKind.DWord),
-        new("Hide the Chat button", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarMn", 0, RegistryValueKind.DWord),
-        new("Hide the Copilot button", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCopilotButton", 0, RegistryValueKind.DWord),
         new("Enable End task on taskbar right-click", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "TaskbarEndTask", 1, RegistryValueKind.DWord),
+        new("Hide the Widgets feed", "HKLM", @"SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0, RegistryValueKind.DWord),
+        new("Hide the taskbar Copilot companion", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarCompanion", 0, RegistryValueKind.DWord),
+        new("Hide the Copilot PWA pin", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "CopilotPWAPin", 0, RegistryValueKind.DWord),
+        new("Hide the Recall pin", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "RecallPin", 0, RegistryValueKind.DWord),
 
         // Effects
+        new("Use custom visual effects so the animation switches stick", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", "VisualFXSetting", 3, RegistryValueKind.DWord),
         new("Disable taskbar animations", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarAnimations", 0, RegistryValueKind.DWord),
-        new("Disable list view alpha select", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ListviewAlphaSelect", 0, RegistryValueKind.DWord),
-        new("Disable list view drop shadows", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ListviewShadow", 0, RegistryValueKind.DWord),
         new("No menu show delay", "HKCU", @"Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String),
-        new("Disable transparency effects", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 0, RegistryValueKind.DWord),
+        new("Enable transparency effects", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 1, RegistryValueKind.DWord),
 
         // Explorer
         new("Show file extensions in Explorer", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 0, RegistryValueKind.DWord),
@@ -38,24 +38,44 @@ public record Setting(
         new("Open Explorer to This PC", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "LaunchTo", 1, RegistryValueKind.DWord),
         new("Hide recent files in Quick Access", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer", "ShowRecent", 0, RegistryValueKind.DWord),
         new("Hide frequent folders in Quick Access", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer", "ShowFrequent", 0, RegistryValueKind.DWord),
-        new("Disable sync provider notifications", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications", 0, RegistryValueKind.DWord),
+        new("Disable Explorer recommendations", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer", "ShowRecommendations", 0, RegistryValueKind.DWord),
 
-        // Start menu and suggestions
+        // Start, ads and nags
         new("Hide the Recommended section in Start", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\Explorer", "HideRecommendedSection", 1, RegistryValueKind.DWord),
         new("Hide the Recommended section in Start (policy manager)", "HKLM", @"SOFTWARE\Microsoft\PolicyManager\current\device\Start", "HideRecommendedSection", 1, RegistryValueKind.DWord),
-        new("Hide the Recommended section in Start (user policy)", "HKCU", @"Software\Policies\Microsoft\Windows\Explorer", "HideRecommendedSection", 1, RegistryValueKind.DWord),
+        new("Enable the education flag that enforces Start policies", "HKLM", @"SOFTWARE\Microsoft\PolicyManager\current\device\Education", "IsEducationEnvironment", 1, RegistryValueKind.DWord),
         new("Disable Start menu recommendations", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Start_IrisRecommendations", 0, RegistryValueKind.DWord),
+        new("Disable Start menu recent documents tracking", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Start_TrackDocs", 0, RegistryValueKind.DWord),
+        new("Hide recent items in the Start menu", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Start", "ShowRecentList", 0, RegistryValueKind.DWord),
+        new("Hide frequent items in the Start menu", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Start", "ShowFrequentList", 0, RegistryValueKind.DWord),
         new("Disable web results in Start search", "HKCU", @"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", 1, RegistryValueKind.DWord),
-        new("Disable Bing in Start search (25H2)", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Search", "BingSearchEnabled", 0, RegistryValueKind.DWord),
+        new("Disable Bing in Start search", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Search", "BingSearchEnabled", 0, RegistryValueKind.DWord),
         new("Block automatically installed suggested apps", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SilentInstalledAppsEnabled", 0, RegistryValueKind.DWord),
         new("Disable Start menu subscribed suggestions", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-338388Enabled", 0, RegistryValueKind.DWord),
         new("Disable Settings app suggestions", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0, RegistryValueKind.DWord),
         new("Disable advertising ID", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0, RegistryValueKind.DWord),
+        new("Dark mode for apps", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 0, RegistryValueKind.DWord),
+        new("Dark mode for system", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme", 0, RegistryValueKind.DWord),
+        new("Keep Copilot disabled", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1, RegistryValueKind.DWord),
+        new("Keep Recall disabled", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsAI", "AllowRecallEnablement", 0, RegistryValueKind.DWord),
+        new("Disable lock screen spotlight", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "RotatingLockScreenEnabled", 0, RegistryValueKind.DWord),
+        new("Disable lock screen spotlight overlay", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "RotatingLockScreenOverlayEnabled", 0, RegistryValueKind.DWord),
+        new("Disable Start account notifications", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Start_AccountNotifications", 0, RegistryValueKind.DWord),
+        new("Disable the finish-setting-up prompt", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0, RegistryValueKind.DWord),
+
+        // System
+        new("Store the hardware clock as UTC (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", "RealTimeIsUniversal", 1, RegistryValueKind.DWord),
+        new("Disable Fast Startup (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, RegistryValueKind.DWord),
+        new("Lock when the screen turns off (reboot)", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs", 300, RegistryValueKind.DWord),
+        new("Pin feature updates to 25H2", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "TargetReleaseVersion", 1, RegistryValueKind.DWord),
+        new("Pin feature updates to 25H2 (version)", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "TargetReleaseVersionInfo", "25H2", RegistryValueKind.String),
+        new("Pin feature updates to 25H2 (product)", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "ProductVersion", "Windows 11", RegistryValueKind.String),
 
         // Gaming
         new("Disable Game DVR background recording", "HKCU", @"System\GameConfigStore", "GameDVR_Enabled", 0, RegistryValueKind.DWord),
         new("Disable app capture", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 0, RegistryValueKind.DWord),
         new("Enable Game Mode", "HKCU", @"Software\Microsoft\GameBar", "AutoGameModeEnabled", 1, RegistryValueKind.DWord),
+        new("Allow automatic Game Mode", "HKCU", @"Software\Microsoft\GameBar", "AllowAutoGameMode", 1, RegistryValueKind.DWord),
 
         // Mouse
         new("Disable mouse acceleration speed", "HKCU", @"Control Panel\Mouse", "MouseSpeed", "0", RegistryValueKind.String),

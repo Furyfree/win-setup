@@ -52,9 +52,11 @@ public static class Packages
         new("Tailscale", "Tailscale.Tailscale"),
         new("7-Zip", "7zip.7zip"),
         new("Everything", "voidtools.Everything"),
+        new(".NET Desktop Runtime 8", "Microsoft.DotNet.DesktopRuntime.8"),
+        new("EverythingToolbar", "srwi.EverythingToolbar.Launcher"),
         new("PowerToys", "Microsoft.PowerToys"),
-        new("GlazeWM", "glzr-io.glazewm"),
-        new("Zebar", "glzr-io.zebar"),
+        // new("GlazeWM", "glzr-io.glazewm"),
+        // new("Zebar", "glzr-io.zebar"),
     ];
 
     public static WingetResult Classify(int exitCode) => exitCode switch

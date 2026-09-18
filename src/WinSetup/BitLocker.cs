@@ -9,16 +9,7 @@ public static class BitLocker
         $WarningPreference = 'SilentlyContinue'
         $drive = $env:SystemDrive
         $keyFile = $env:WINSETUP_BITLOCKER_FILE
-
-        $volume = Get-BitLockerVolume -MountPoint $drive
-        if ($volume.VolumeStatus -eq 'FullyDecrypted') {
-            Enable-BitLocker -MountPoint $drive -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector -SkipHardwareTest | Out-Null
-        }
-
-        $volume = Get-BitLockerVolume -MountPoint $drive
-        if (-not ($volume.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'Tpm' })) {
-            Add-BitLockerKeyProtector -MountPoint $drive -TpmProtector | Out-Null
-        }
+        $keyWritten = 'no'
 
         $volume = Get-BitLockerVolume -MountPoint $drive
         $recovery = $volume.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' } | Select-Object -First 1
@@ -29,6 +20,16 @@ public static class BitLocker
         }
         if ($recovery -and -not (Test-Path -LiteralPath $keyFile)) {
             Set-Content -LiteralPath $keyFile -Value $recovery.RecoveryPassword -NoNewline
+            $keyWritten = 'yes'
+        }
+
+        if ((Get-BitLockerVolume -MountPoint $drive).VolumeStatus -eq 'FullyDecrypted') {
+            Enable-BitLocker -MountPoint $drive -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector -SkipHardwareTest | Out-Null
+        }
+
+        $volume = Get-BitLockerVolume -MountPoint $drive
+        if (-not ($volume.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'Tpm' })) {
+            Add-BitLockerKeyProtector -MountPoint $drive -TpmProtector | Out-Null
         }
 
         $volume = Get-BitLockerVolume -MountPoint $drive
@@ -37,7 +38,7 @@ public static class BitLocker
         }
 
         $volume = Get-BitLockerVolume -MountPoint $drive
-        '{0}|{1}' -f $volume.VolumeStatus, $volume.ProtectionStatus
+        '{0}|{1}|{2}' -f $volume.VolumeStatus, $volume.ProtectionStatus, $keyWritten
         """;
 
     public static RunResult Enable()

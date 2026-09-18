@@ -93,4 +93,36 @@ public class SettingsTests
         Assert.False(setting.Matches(new byte[] { 1 }));
         Assert.False(setting.Matches(null));
     }
+
+    [Fact]
+    public void Settings_are_unique_and_labeled()
+    {
+        var keys = Setting.All.Select(setting => $"{setting.Hive}\\{setting.Key}\\{setting.Name}").ToArray();
+        Assert.Equal(keys.Length, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.All(Setting.All, setting => Assert.False(string.IsNullOrWhiteSpace(setting.Why)));
+    }
+}
+
+public class PowerTests
+{
+    [Fact]
+    public void Parses_the_ac_index_from_powercfg_output()
+    {
+        const string output = """
+              Power Setting GUID: 29f6c1db-86da-48c5-9fdb-f2b67b1f44da  (Sleep after)
+                Current AC Power Setting Index: 0x00000384
+                Current DC Power Setting Index: 0x00000258
+            """;
+        Assert.Equal(900u, Power.ParseAc(output));
+    }
+
+    [Fact]
+    public void Returns_null_when_the_setting_is_hidden() => Assert.Null(Power.ParseAc("  GUID Alias: SCHEME_BALANCED"));
+
+    [Fact]
+    public void Power_items_are_unique()
+    {
+        var keys = PowerItem.All.Select(item => $"{item.Subgroup}\\{item.Setting}").ToArray();
+        Assert.Equal(keys.Length, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
 }

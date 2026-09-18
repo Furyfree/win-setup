@@ -49,6 +49,18 @@ public static class Commands
             Console.WriteLine($"{state,-8} {setting.Name}: {setting.Why}");
         }
 
+        foreach (var item in PowerItem.All)
+        {
+            var ac = item.ReadAc();
+            if (ac is not null && ac != item.Ac)
+            {
+                drifted++;
+            }
+
+            var label = ac is null ? "unknown" : ac == item.Ac ? "ok" : "drift";
+            Console.WriteLine($"{label,-8} {item.Why}");
+        }
+
         return missing + drifted == 0 ? 0 : 1;
     }
 
@@ -84,15 +96,16 @@ public static class Commands
             {
                 if (setting.Check() == SettingState.Matches)
                 {
-                    Console.WriteLine($"ok    {setting.Name}");
+                    Console.WriteLine($"ok    {setting.Why}");
                     continue;
                 }
 
                 setting.Write();
                 if (setting.Check() == SettingState.Matches)
                 {
-                    Console.WriteLine($"set   {setting.Name}");
-                    if (setting.Name.Contains("Taskbar", StringComparison.OrdinalIgnoreCase)
+                    Console.WriteLine($"set   {setting.Why}");
+                    if (setting.Key.Contains("StuckRects3", StringComparison.OrdinalIgnoreCase)
+                        || setting.Name.Contains("Taskbar", StringComparison.OrdinalIgnoreCase)
                         || setting.Name.Equals("SearchboxTaskbarMode", StringComparison.Ordinal))
                     {
                         taskbarChanged = true;
@@ -100,14 +113,52 @@ public static class Commands
                 }
                 else
                 {
-                    failures.Add($"setting: {setting.Name}");
-                    Console.WriteLine($"FAIL  {setting.Name}");
+                    failures.Add($"setting: {setting.Why}");
+                    Console.WriteLine($"FAIL  {setting.Why}");
                 }
             }
             catch (Exception exception)
             {
-                failures.Add($"setting: {setting.Name} ({exception.Message})");
-                Console.WriteLine($"FAIL  {setting.Name} ({exception.Message})");
+                failures.Add($"setting: {setting.Why} ({exception.Message})");
+                Console.WriteLine($"FAIL  {setting.Why} ({exception.Message})");
+            }
+        }
+
+        Console.WriteLine("== power ==");
+        foreach (var item in PowerItem.All)
+        {
+            try
+            {
+                if (item.ReadAc() == item.Ac)
+                {
+                    Console.WriteLine($"ok    {item.Why}");
+                    continue;
+                }
+
+                var result = item.Write();
+                if (!result.Ok)
+                {
+                    failures.Add($"power: {item.Why} ({result.Hex})");
+                    Console.WriteLine($"FAIL  {item.Why} ({result.Hex})");
+                    continue;
+                }
+
+                // ponytail: hidden power settings are absent from powercfg /query; the set is idempotent, so no re-read is not a failure.
+                var after = item.ReadAc();
+                if (after == item.Ac || after is null)
+                {
+                    Console.WriteLine($"set   {item.Why}");
+                }
+                else
+                {
+                    failures.Add($"power: {item.Why}");
+                    Console.WriteLine($"FAIL  {item.Why}");
+                }
+            }
+            catch (Exception exception)
+            {
+                failures.Add($"power: {item.Why} ({exception.Message})");
+                Console.WriteLine($"FAIL  {item.Why} ({exception.Message})");
             }
         }
 
@@ -163,10 +214,12 @@ public static class Commands
         else
         {
             var result = BitLocker.Enable();
-            var status = result.StdOut.Trim().Split('|').LastOrDefault()?.Trim() ?? string.Empty;
-            if (result.Ok && status.Equals("On", StringComparison.OrdinalIgnoreCase))
+            var parts = result.StdOut.Trim().Split('|');
+            var protection = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+            if (result.Ok && (protection.Equals("On", StringComparison.OrdinalIgnoreCase)
+                || protection.Equals("EncryptionInProgress", StringComparison.OrdinalIgnoreCase)))
             {
-                Console.WriteLine("set   protection On");
+                Console.WriteLine($"set   protection {protection}");
             }
             else
             {
@@ -208,7 +261,7 @@ public static class Commands
         if (taskbarChanged)
         {
             Console.WriteLine();
-            Console.WriteLine("Restart Explorer or sign out for the taskbar changes to appear.");
+            Console.WriteLine("Restart Explorer or reboot for the taskbar changes to appear.");
         }
 
         if (rebootRequired)
