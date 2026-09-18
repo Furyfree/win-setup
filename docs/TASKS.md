@@ -15,7 +15,7 @@
 - [ ] Verify: packages installed, BitLocker protected with the key in
       1Password, clock stable after booting Fedora, screen locks when the
       display turns off, Windows Update still delivers security updates.
-- [ ] Make the repository public and cut the first release so bootstrap works.
+- [x] Make the repository public and cut the first release so bootstrap works.
 
 ## Later
 
