@@ -10,6 +10,7 @@ WinGet IDs, no state database. Chezmoi owns dotfiles; win-setup owns the machine
 | `win-setup status` | Read-only drift check. Exit 0 clean, 1 drift. |
 | `win-setup apply` | Needs elevation. Applies settings, installs packages, enables BitLocker, runs Chezmoi. Safe to rerun. |
 | `win-setup snapshot` | Read-only machine-state bundle for review. |
+| `win-setup version` | Prints the version. |
 
 Every change is detect -> act -> recheck, so a rerun only writes what differs.
 

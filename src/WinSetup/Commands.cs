@@ -4,6 +4,7 @@ public static class Commands
 {
     public static int Status()
     {
+        Console.WriteLine($"win-setup {Update.DisplayVersion}");
         var host = Checks.Collect();
         if (host is null)
         {

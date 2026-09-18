@@ -17,6 +17,16 @@ public static class Update
         ?? typeof(Update).Assembly.GetName().Version?.ToString()
         ?? "0.0.0";
 
+    public static string DisplayVersion
+    {
+        get
+        {
+            var text = CurrentVersion;
+            var cut = text.IndexOf('+');
+            return cut >= 0 ? text[..cut] : text;
+        }
+    }
+
     public static int RunApply(string[] args)
     {
         EnsureInstalled();
