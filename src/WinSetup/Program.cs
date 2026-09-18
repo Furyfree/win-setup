@@ -1,1 +1,26 @@
-﻿Console.WriteLine("Hello, World!");
+﻿namespace WinSetup;
+
+public static class Program
+{
+    public static int Main(string[] args)
+    {
+        if (args.Length != 1)
+        {
+            return Usage();
+        }
+
+        return args[0].ToLowerInvariant() switch
+        {
+            "status" => Commands.Status(),
+            "apply" => Commands.Apply(),
+            "snapshot" => Snapshot.Run(),
+            _ => Usage(),
+        };
+    }
+
+    private static int Usage()
+    {
+        Console.WriteLine("usage: win-setup status|apply|snapshot");
+        return 2;
+    }
+}
