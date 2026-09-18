@@ -11,8 +11,8 @@ This is the current work queue. Long-term sequencing belongs in
 - [x] Define the Chezmoi boundary in [CONFIGS.md](CONFIGS.md).
 - [x] Record the actual installation procedure in
       [INSTALLATION.md](INSTALLATION.md).
-- [x] Record the post-CTT registry/service/appx baseline in
-      [SNAPSHOT-2026-09-18.md](SNAPSHOT-2026-09-18.md).
+- [x] Record the post-CTT registry/service/appx baseline (kept in the personal
+      docs repository, not here).
 - [ ] Continue replacing assumptions from the old planning document with facts
       from the new installation.
 

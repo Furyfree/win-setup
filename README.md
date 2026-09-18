@@ -29,7 +29,6 @@ irm https://raw.githubusercontent.com/Furyfree/win-setup/main/bootstrap.ps1 | ie
 - [Packages](docs/PACKAGES.md)
 - [Configuration](docs/CONFIGS.md)
 - [Installation](docs/INSTALLATION.md)
-- [Post-install snapshot (CTT)](docs/SNAPSHOT-2026-09-18.md)
 
 The original Windows/WSL planning document is retained as
 [historical planning](docs/Windows_Setup_Spec_2026-09-11.md) while useful
