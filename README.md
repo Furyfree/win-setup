@@ -28,7 +28,9 @@ newer one exists (v0.1.6 and later).
    `%USERPROFILE%\bitlocker-recovery-<host>.txt`. Move that file into 1Password
    from another device: a key that only exists on the encrypted disk is useless
    if the machine will not boot.
-4. **Chezmoi** - installs it if missing. If the dotfiles are already
+4. **WSL** - enables the WSL features (reboot), installs Fedora with systemd
+   and sets it as the default distribution.
+5. **Chezmoi** - installs it if missing. If the dotfiles are already
    initialized it runs `chezmoi apply`; otherwise it prints the one-time
    bootstrap. Run this once in a normal terminal (Git and GitHub
    authentication must be available), answer its prompts, and every later

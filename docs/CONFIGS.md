@@ -33,6 +33,9 @@ Chezmoi stays independently usable (`chezmoi status`, `chezmoi diff`,
 `chezmoi apply`). Machine and profile data belong to the dotfiles repository;
 win-setup does not invent a second profile model.
 
+WSL is a separate Linux home. Run `chezmoi init --apply` inside Fedora when
+it is set up; win-setup does not configure the WSL home.
+
 ## Secrets
 
 Never commit recovery keys, tokens, passwords, session data, SSH keys, or

@@ -60,8 +60,14 @@ needs are stated in each setting's description. Power scheme values use
 
 See [PACKAGES.md](PACKAGES.md). Existing installs are detected and preserved.
 
+## WSL
+
+Fedora is installed as the WSL distribution for Linux-only tooling, Docker,
+and databases. WSL has its own Linux home; Chezmoi is run there separately
+and win-setup does not configure it.
+
 ## Non-goals
 
-WSL and Linux provisioning, Docker, development runtimes and databases, a
-desired-state engine, disk repartitioning, game installation, backup
-orchestration, and chasing a process count.
+Development runtimes and databases outside WSL, a desired-state engine, disk
+repartitioning, game installation, backup orchestration, and chasing a
+process count.

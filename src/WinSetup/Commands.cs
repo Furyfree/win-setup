@@ -258,6 +258,57 @@ public static class Commands
 
         var keyWritten = File.Exists(BitLocker.KeyFile);
 
+        Console.WriteLine("== wsl ==");
+        try
+        {
+            if (!Wsl.FeaturesEnabled())
+            {
+                var enable = Wsl.EnableFeatures();
+                if (enable.Ok)
+                {
+                    Console.WriteLine("set   WSL features enabled (reboot required)");
+                    rebootRequired = true;
+                }
+                else
+                {
+                    failures.Add($"wsl features ({enable.Hex})");
+                    Console.WriteLine($"FAIL  wsl features ({enable.Hex}) {enable.StdErr.Trim()}");
+                }
+            }
+            else if (Wsl.DistroInstalled())
+            {
+                Console.WriteLine("ok    Fedora WSL installed");
+            }
+            else
+            {
+                var package = Wsl.EnsurePackage();
+                if (!package.Ok)
+                {
+                    failures.Add($"wsl package ({package.Hex})");
+                    Console.WriteLine($"FAIL  wsl package ({package.Hex})");
+                }
+                else
+                {
+                    Console.WriteLine("installing Fedora WSL (large download)");
+                    var install = Wsl.InstallDistro();
+                    if (install.Ok)
+                    {
+                        Console.WriteLine("inst  Fedora WSL");
+                    }
+                    else
+                    {
+                        failures.Add($"wsl distro ({install.Hex})");
+                        Console.WriteLine($"FAIL  wsl distro ({install.Hex}) {install.StdErr.Trim()}");
+                    }
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            failures.Add($"wsl ({exception.Message})");
+            Console.WriteLine($"FAIL  wsl ({exception.Message})");
+        }
+
         Console.WriteLine("== chezmoi ==");
         Paths.RefreshPath();
         if (Chezmoi.IsInitialized())
