@@ -2,7 +2,7 @@ namespace WinSetup;
 
 public static class Chezmoi
 {
-    public const string InitHint = "chezmoi init --apply git@github.com:Furyfree/dotfiles.git";
+    public const string InitHint = "chezmoi init --apply https://github.com/Furyfree/dotfiles.git";
 
     public static bool IsInitialized()
     {

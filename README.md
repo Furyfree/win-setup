@@ -26,12 +26,12 @@ Every change is detect -> act -> recheck, so a rerun only writes what differs.
    if the machine will not boot.
 4. **Chezmoi** - installs it if missing. If the dotfiles are already
    initialized it runs `chezmoi apply`; otherwise it prints the one-time
-   bootstrap. Run this once in a normal terminal (Git and your 1Password SSH
-   key must be available), answer its prompts, and every later `apply` keeps
-   the dotfiles updated:
+   bootstrap. Run this once in a normal terminal (Git and GitHub
+   authentication must be available), answer its prompts, and every later
+   `apply` keeps the dotfiles updated:
 
    ```powershell
-   chezmoi init --apply git@github.com:Furyfree/dotfiles.git
+   chezmoi init --apply https://github.com/Furyfree/dotfiles.git
    ```
 
    Chezmoi stays usable on its own: `chezmoi status`, `chezmoi diff`, and
