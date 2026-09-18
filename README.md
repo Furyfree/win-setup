@@ -15,8 +15,9 @@ Every change is detect -> act -> recheck, so a rerun only writes what differs.
 
 ## What apply does
 
-1. **Settings** - taskbar, Explorer, ads/suggestions, gaming, mouse, power,
-   dual-boot clock, feature-update pin. Already-correct values are skipped.
+1. **Settings** - taskbar, snapping, Explorer, ads/suggestions, gaming, mouse,
+   power, dual-boot clock, feature-update pin. Already-correct values are
+   skipped.
 2. **Packages** - exact IDs from `Packages.cs` via WinGet. Never fuzzy matches,
    never uninstalls, never upgrades an existing install.
 3. **BitLocker** - TPM protector plus a recovery password written to

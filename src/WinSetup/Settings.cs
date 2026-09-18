@@ -32,6 +32,12 @@ public record Setting(
         new("No menu show delay", "HKCU", @"Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String),
         new("Enable transparency effects", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 1, RegistryValueKind.DWord),
 
+        // Snapping
+        new("Keep window snapping available", "HKCU", @"Control Panel\Desktop", "WindowArrangementActive", "1", RegistryValueKind.String),
+        new("Disable snap assist suggestions", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "SnapAssist", 0, RegistryValueKind.DWord),
+        new("Disable snap layouts on maximize hover", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "EnableSnapAssistFlyout", 0, RegistryValueKind.DWord),
+        new("Disable snap layouts on drag to top", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "EnableSnapBar", 0, RegistryValueKind.DWord),
+
         // Explorer
         new("Show file extensions in Explorer", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 0, RegistryValueKind.DWord),
         new("Show hidden files in Explorer", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden", 1, RegistryValueKind.DWord),
