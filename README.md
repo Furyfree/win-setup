@@ -20,8 +20,8 @@ Before anything else, `apply` checks the latest release and updates itself if a
 newer one exists (v0.1.6 and later).
 
 1. **Settings** - taskbar, snapping, Explorer, ads/suggestions, gaming, mouse,
-   power, dual-boot clock, feature-update pin. Already-correct values are
-   skipped.
+   power, night light with location, dual-boot clock, feature-update pin.
+   Already-correct values are skipped.
 2. **Packages** - exact IDs from `Packages.cs` via WinGet. Never fuzzy matches,
    never uninstalls, never upgrades an existing install.
 3. **BitLocker** - TPM protector plus a recovery password written to

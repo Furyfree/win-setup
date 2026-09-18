@@ -88,6 +88,7 @@ public static class Commands
 
         var failures = new List<string>();
         var taskbarChanged = false;
+        var colorStoreChanged = false;
         var rebootRequired = false;
 
         Console.WriteLine("== settings ==");
@@ -111,6 +112,11 @@ public static class Commands
                     {
                         taskbarChanged = true;
                     }
+
+                    if (setting.Key.Contains("CloudStore", StringComparison.OrdinalIgnoreCase))
+                    {
+                        colorStoreChanged = true;
+                    }
                 }
                 else
                 {
@@ -123,6 +129,11 @@ public static class Commands
                 failures.Add($"setting: {setting.Why} ({exception.Message})");
                 Console.WriteLine($"FAIL  {setting.Why} ({exception.Message})");
             }
+        }
+
+        if (colorStoreChanged)
+        {
+            Notify.SettingsChanged();
         }
 
         Console.WriteLine("== power ==");

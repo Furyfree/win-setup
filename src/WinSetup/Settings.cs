@@ -13,6 +13,14 @@ public record Setting(
     RegistryValueKind Kind,
     int? ByteIndex = null)
 {
+    private static readonly byte[] SunsetToSunrise =
+    [
+        0x43, 0x42, 0x01, 0x00, 0x0A, 0x02, 0x01, 0x00, 0x2A, 0x06, 0x92, 0xC5, 0xB6, 0xD5, 0x06,
+        0x2A, 0x2B, 0x0E, 0x1F, 0x43, 0x42, 0x01, 0x00, 0x02, 0x01, 0xCA, 0x14, 0x00, 0xCA, 0x1E,
+        0x00, 0xCF, 0x28, 0x90, 0x35, 0xCA, 0x32, 0x0E, 0x13, 0x2E, 0x17, 0x00, 0xCA, 0x3C, 0x0E,
+        0x07, 0x2E, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ];
+
     public static readonly Setting[] All =
     [
         // Taskbar
@@ -68,7 +76,13 @@ public record Setting(
         new("Disable Start account notifications", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Start_AccountNotifications", 0, RegistryValueKind.DWord),
         new("Disable the finish-setting-up prompt", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0, RegistryValueKind.DWord),
 
+        // Night light
+        new("Night light schedule: sunset to sunrise", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\DefaultAccount\Current\default$windows.data.bluelightreduction.settings\windows.data.bluelightreduction.settings", "Data", SunsetToSunrise, RegistryValueKind.Binary),
+
         // System
+        new("Enable location services", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location", "Value", "Allow", RegistryValueKind.String),
+        new("Allow apps to access location", "HKCU", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location", "Value", "Allow", RegistryValueKind.String),
+        new("Do not block location usage", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors", "DisableLocation", 0, RegistryValueKind.DWord),
         new("Store the hardware clock as UTC (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", "RealTimeIsUniversal", 1, RegistryValueKind.DWord),
         new("Disable Fast Startup (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, RegistryValueKind.DWord),
         new("Lock when the screen turns off (reboot)", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs", 300, RegistryValueKind.DWord),
@@ -111,6 +125,9 @@ public record Setting(
         return Kind switch
         {
             RegistryValueKind.DWord or RegistryValueKind.QWord => Convert.ToInt64(current) == Convert.ToInt64(Value),
+            RegistryValueKind.Binary when ByteIndex is null => current is byte[] actual
+                && Value is byte[] expected
+                && actual.AsSpan().SequenceEqual(expected),
             RegistryValueKind.Binary => current is byte[] bytes
                 && ByteIndex is int index
                 && index < bytes.Length

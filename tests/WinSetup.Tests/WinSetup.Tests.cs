@@ -95,6 +95,15 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Binary_full_value_settings_compare_exactly()
+    {
+        var setting = new Setting("why", "HKCU", @"Software\Test", "Data", new byte[] { 1, 2, 3 }, Microsoft.Win32.RegistryValueKind.Binary);
+        Assert.True(setting.Matches(new byte[] { 1, 2, 3 }));
+        Assert.False(setting.Matches(new byte[] { 1, 2 }));
+        Assert.False(setting.Matches("System.Byte[]"));
+    }
+
+    [Fact]
     public void Settings_are_unique_and_labeled()
     {
         var keys = Setting.All.Select(setting => $"{setting.Hive}\\{setting.Key}\\{setting.Name}").ToArray();
