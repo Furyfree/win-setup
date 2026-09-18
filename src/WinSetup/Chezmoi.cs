@@ -10,5 +10,5 @@ public static class Chezmoi
         return result.Ok && Directory.Exists(result.StdOut.Trim());
     }
 
-    public static int Apply() => Runner.RunInteractive(Paths.Chezmoi, "apply");
+    public static int Apply() => Runner.RunInteractive(Paths.Chezmoi, ["apply"]);
 }

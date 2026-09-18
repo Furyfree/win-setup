@@ -192,8 +192,15 @@ public static class Commands
         Console.WriteLine("      checking installed packages...");
         var present = new List<string>();
         var missing = new List<Package>();
+        var checkedCount = 0;
         foreach (var package in Packages.All)
         {
+            checkedCount++;
+            if (!Console.IsErrorRedirected)
+            {
+                Console.Error.Write($"\r      {checkedCount}/{Packages.All.Length} {package.Name}   ");
+            }
+
             try
             {
                 if (Packages.IsPresent(Packages.Classify(Runner.Run(Paths.Winget, package.DetectArgs).ExitCode)))
@@ -212,6 +219,11 @@ public static class Commands
             }
         }
 
+        if (!Console.IsErrorRedirected)
+        {
+            Console.Error.Write("\r" + new string(' ', 64) + "\r");
+        }
+
         if (present.Count > 0)
         {
             Console.WriteLine($"ok    already installed: {string.Join(", ", present)}");
@@ -223,7 +235,7 @@ public static class Commands
             {
                 Console.WriteLine($"inst  {package.Name}");
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs());
+                var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs(), package.Name);
                 stopwatch.Stop();
                 var result = Packages.Classify(exit);
                 if (Packages.IsPresent(result))
@@ -419,6 +431,14 @@ public static class Commands
         {
             Console.WriteLine();
             Console.WriteLine("A reboot is required to finish one or more package installs.");
+        }
+
+        try
+        {
+            Console.CursorVisible = true;
+        }
+        catch (IOException)
+        {
         }
 
         return failures.Count == 0 ? 0 : 1;
