@@ -23,7 +23,7 @@ public static class Wsl
 
     public static bool Provisioned() =>
         Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
-            "test -f \"$HOME/.config/chezmoi/chezmoi.toml\" && test -d \"$HOME/.local/share/chezmoi/.git\""]).Ok;
+            "test -f \"$HOME/.cache/win-setup-wsl-provisioned\""]).Ok;
 
     public static RunResult Provision()
     {
@@ -58,13 +58,15 @@ public static class Wsl
             profiles = ["common", "unix", "linux", "development"]
             EOF
               chown "$user:" "$cfg"
-              if ! runuser -u "$user" -- chezmoi --no-tty apply </dev/null >"$log" 2>&1; then
-                echo "chezmoi apply failed; last log lines:"
-                tail -30 "$log"
-                exit 1
-              fi
-              tail -3 "$log"
             fi
+            if ! runuser -u "$user" -- chezmoi --no-tty apply --exclude=scripts </dev/null >"$log" 2>&1; then
+              echo "chezmoi apply failed; last log lines:"
+              tail -30 "$log"
+              exit 1
+            fi
+            tail -3 "$log"
+            runuser -u "$user" -- touch "$home/.cache/win-setup-wsl-provisioned"
+            echo "note: config files applied; run scripts skipped. Install mise and run 'chezmoi apply' in WSL for tools."
             """;
         var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(script));
         return Runner.RunStreaming(Exe, ["-d", DefaultDistro, "-u", "root", "bash", "-c", $"echo {encoded} | base64 -d | bash"]);
