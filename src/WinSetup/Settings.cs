@@ -14,6 +14,9 @@ public record Setting(
     int? ByteIndex = null,
     bool IgnoreTimestamps = false)
 {
+    public static readonly string WallpaperPath = Path.Combine(
+        Paths.UserProfile, "Pictures", "Wallpapers", "charcoal-amber-mountain-horizon.jpg");
+
     public static readonly Setting[] All =
     [
         // Taskbar
@@ -31,6 +34,14 @@ public record Setting(
         new("Disable taskbar animations", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarAnimations", 0, RegistryValueKind.DWord),
         new("No menu show delay", "HKCU", @"Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String),
         new("Enable transparency effects", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 1, RegistryValueKind.DWord),
+
+        // Wallpaper and lock screen
+        new("Set the desktop wallpaper", "HKCU", @"Control Panel\Desktop", "WallPaper", WallpaperPath, RegistryValueKind.String),
+        new("Fill the desktop wallpaper", "HKCU", @"Control Panel\Desktop", "WallpaperStyle", "10", RegistryValueKind.String),
+        new("Disable wallpaper tiling", "HKCU", @"Control Panel\Desktop", "TileWallpaper", "0", RegistryValueKind.String),
+        new("Set the lock screen image", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", "LockScreenImagePath", WallpaperPath, RegistryValueKind.String),
+        new("Set the lock screen image URL", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", "LockScreenImageUrl", WallpaperPath, RegistryValueKind.String),
+        new("Enable the lock screen image policy", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", "LockScreenImageStatus", 1, RegistryValueKind.DWord),
 
         // Snapping
         new("Keep window snapping available", "HKCU", @"Control Panel\Desktop", "WindowArrangementActive", "1", RegistryValueKind.String),

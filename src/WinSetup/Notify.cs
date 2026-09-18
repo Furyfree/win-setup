@@ -16,6 +16,19 @@ public static class Notify
         SendMessageTimeout(HwndBroadcast, 0x001A, IntPtr.Zero, "ImmersiveColorSet", 0x0002, 1000, out _);
     }
 
+    public static bool SetWallpaper(string path)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return false;
+        }
+
+        return SystemParametersInfo(0x0014, 0, path, 0x0001 | 0x0002);
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool SystemParametersInfo(uint action, uint param, string value, uint flags);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr SendMessageTimeout(
         IntPtr hWnd, uint message, IntPtr wParam, string lParam, uint flags, uint timeout, out IntPtr result);

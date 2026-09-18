@@ -262,6 +262,11 @@ public static class Commands
             Console.WriteLine($"todo  run: {Chezmoi.InitHint}");
         }
 
+        if (File.Exists(Setting.WallpaperPath))
+        {
+            Notify.SetWallpaper(Setting.WallpaperPath);
+        }
+
         Console.WriteLine();
         Console.WriteLine(failures.Count == 0 ? "summary: all steps ok" : $"summary: {failures.Count} failed");
         foreach (var failure in failures)
