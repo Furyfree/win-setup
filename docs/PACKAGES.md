@@ -109,11 +109,33 @@ Keep launchers and heavyweight user applications such as Steam, Battle.net,
 OBS, Spotify, UniGetUI, and AI desktop apps out of automatic login startup by
 default unless explicitly chosen otherwise.
 
+## Development tooling
+
+Installed by win-setup. Runtime versions are managed by mise, not by native
+SDK packages; WSL/Fedora owns Linux-only tooling.
+
+| Tool | WinGet ID | Tool | WinGet ID |
+| --- | --- | --- | --- |
+| Neovim | `Neovim.Neovim` | mise | `jdx.mise` |
+| ripgrep | `BurntSushi.ripgrep.MSVC` | fd | `sharkdp.fd` |
+| fzf | `junegunn.fzf` | bat | `sharkdp.bat` |
+| eza | `eza-community.eza` | zoxide | `ajeetdsouza.zoxide` |
+| Starship | `Starship.Starship` | lazygit | `JesseDuffield.lazygit` |
+| lazydocker | `JesseDuffield.Lazydocker` | just | `Casey.Just` |
+| jq | `jqlang.jq` | yq | `MikeFarah.yq` |
+| tealdeer | `dbrgn.tealdeer` | dust | `bootandy.dust` |
+| duf | `muesli.duf` | btop4win | `aristocratos.btop4win` |
+| fastfetch | `Fastfetch-cli.Fastfetch` | yazi | `sxyazi.yazi` |
+| shellcheck | `koalaman.shellcheck` | Gitleaks | `Gitleaks.Gitleaks` |
+| topgrade | `topgrade-rs.topgrade` | Codex CLI | `OpenAI.Codex` |
+| Claude Code | `Anthropic.ClaudeCode` | Copilot CLI | `GitHub.Copilot` |
+| JetBrains Toolbox | `JetBrains.Toolbox` | CMake | `Kitware.CMake` |
+| Ninja | `Ninja-build.Ninja` | uv | `astral-sh.uv` |
+| fnm | `Schniz.fnm` | gsudo | `gerardog.gsudo` |
+
 ## Deferred development packages
 
-The first gaming-ready version does not need to install Windows-native Node,
-Python, Go, Java, Rust, .NET SDKs, CMake/Ninja, Visual Studio, WSL, Docker
-Desktop, or a full Linux CLI collection.
-
-Those can be added later when a concrete Windows development workflow requires
-them.
+Windows-native language runtimes stay out; mise manages them per project.
+WSL Fedora covers Linux-only tooling, Docker, and databases. Deferred until
+a concrete need: native Node/Python/Go/Java/Rust/.NET SDK packages, Docker
+Desktop, Visual Studio, and a full Linux CLI collection.
