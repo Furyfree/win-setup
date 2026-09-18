@@ -37,7 +37,7 @@ public static class Wsl
     {
         var script = $$"""
             set -e
-            dnf install -y chezmoi git zsh
+            dnf install -y chezmoi fastfetch git zsh
             user=$(getent passwd 1000 | cut -d: -f1)
             home=$(getent passwd 1000 | cut -d: -f6)
             machine="{{Environment.MachineName}}"
