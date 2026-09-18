@@ -13,6 +13,7 @@ It is not a Windows Nimbus.
 - `src/WinSetup/` - one console app.
 - `tests/WinSetup.Tests/` - pure-logic tests, runnable on Linux.
 - `docs/` - specification, packages, configs, installation history.
+- `docs/local/` - gitignored local reference material, never published.
 - `bootstrap.ps1` - fresh-install entry point.
 
 ## Commands
