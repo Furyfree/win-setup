@@ -131,8 +131,10 @@ public record Setting(
         // System
         new("Enable location services", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location", "Value", "Allow", RegistryValueKind.String),
         new("Allow apps to access location", "HKCU", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location", "Value", "Allow", RegistryValueKind.String),
-        new("Deny desktop apps location access", "HKCU", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location\NonPackaged", "Value", "Deny", RegistryValueKind.String),
+        new("Allow desktop apps to access location", "HKCU", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location\NonPackaged", "Value", "Allow", RegistryValueKind.String),
+        new("Allow desktop apps to access location (machine)", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location\NonPackaged", "Value", "Allow", RegistryValueKind.String),
         new("Allow the location sensor", "HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}", "SensorPermissionState", 1, RegistryValueKind.DWord),
+        new("Set the time zone automatically", "HKLM", @"SYSTEM\CurrentControlSet\Services\tzautoupdate", "Start", 3, RegistryValueKind.DWord),
         new("Do not block location usage", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors", "DisableLocation", 0, RegistryValueKind.DWord),
         new("Store the hardware clock as UTC (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", "RealTimeIsUniversal", 1, RegistryValueKind.DWord),
         new("Disable Fast Startup (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, RegistryValueKind.DWord),
