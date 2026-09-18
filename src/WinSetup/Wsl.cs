@@ -1,5 +1,7 @@
 namespace WinSetup;
 
+using Microsoft.Win32;
+
 public static class Wsl
 {
     public const string DefaultDistro = "FedoraLinux-44";
@@ -18,6 +20,10 @@ public static class Wsl
 
     public static bool DistroInstalled() =>
         Runner.Run(Exe, ["--list", "--quiet"]).StdOut.Contains("Fedora", StringComparison.OrdinalIgnoreCase);
+
+    public static bool RebootPending() =>
+        Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending") is not null
+        || Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") is not null;
 
     public static RunResult EnableFeatures()
     {

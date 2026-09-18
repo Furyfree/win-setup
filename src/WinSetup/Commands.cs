@@ -279,6 +279,11 @@ public static class Commands
             {
                 Console.WriteLine("ok    Fedora WSL installed");
             }
+            else if (Wsl.RebootPending())
+            {
+                Console.WriteLine("todo  reboot to finish the WSL feature install");
+                rebootRequired = true;
+            }
             else
             {
                 var package = Wsl.EnsurePackage();
