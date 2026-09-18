@@ -103,6 +103,18 @@ public class SettingsTests
     }
 }
 
+public class UpdateTests
+{
+    [Theory]
+    [InlineData("0.1.6", "v0.1.7", true)]
+    [InlineData("0.1.7", "v0.1.6", false)]
+    [InlineData("0.1.6", "0.1.6", false)]
+    [InlineData("0.1.6+abc123", "v0.1.7", true)]
+    [InlineData("nonsense", "v0.1.7", false)]
+    public void Compares_release_versions(string current, string latest, bool newer)
+        => Assert.Equal(newer, Update.IsNewer(current, latest));
+}
+
 public class PowerTests
 {
     [Fact]

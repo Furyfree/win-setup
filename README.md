@@ -15,6 +15,9 @@ Every change is detect -> act -> recheck, so a rerun only writes what differs.
 
 ## What apply does
 
+Before anything else, `apply` checks the latest release and updates itself if a
+newer one exists (v0.1.6 and later).
+
 1. **Settings** - taskbar, snapping, Explorer, ads/suggestions, gaming, mouse,
    power, dual-boot clock, feature-update pin. Already-correct values are
    skipped.

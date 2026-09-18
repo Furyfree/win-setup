@@ -12,7 +12,7 @@ public static class Program
         return args[0].ToLowerInvariant() switch
         {
             "status" => Commands.Status(),
-            "apply" => Commands.Apply(),
+            "apply" => Update.RunApply(args),
             "snapshot" => Snapshot.Run(),
             _ => Usage(),
         };
