@@ -21,14 +21,17 @@ public static class Wsl
 
     public static RunResult EnableFeatures()
     {
-        var platform = Runner.Run(Dism, ["/online", "/enable-feature", "/featurename:VirtualMachinePlatform", "/all", "/norestart"]);
+        var platform = Normalize(Runner.Run(Dism, ["/online", "/enable-feature", "/featurename:VirtualMachinePlatform", "/all", "/norestart"]));
         if (!platform.Ok)
         {
             return platform;
         }
 
-        return Runner.Run(Dism, ["/online", "/enable-feature", "/featurename:Microsoft-Windows-Subsystem-Linux", "/all", "/norestart"]);
+        return Normalize(Runner.Run(Dism, ["/online", "/enable-feature", "/featurename:Microsoft-Windows-Subsystem-Linux", "/all", "/norestart"]));
     }
+
+    private static RunResult Normalize(RunResult result) =>
+        result.ExitCode == 3010 ? result with { ExitCode = 0 } : result;
 
     public static RunResult EnsurePackage()
     {
