@@ -196,11 +196,12 @@ public static class Commands
                     continue;
                 }
 
-                var install = Runner.Run(Paths.Winget, package.InstallArgs());
+                Console.WriteLine($"inst  {package.Name}");
+                var install = Runner.RunStreaming(Paths.Winget, package.InstallArgs());
                 var result = Packages.Classify(install.ExitCode);
                 if (Packages.IsPresent(result))
                 {
-                    Console.WriteLine($"inst  {package.Name}");
+                    Console.WriteLine($"done  {package.Name}");
                     if (result == WingetResult.RebootRequired)
                     {
                         rebootRequired = true;
@@ -236,6 +237,7 @@ public static class Commands
         }
         else
         {
+            Console.WriteLine("      enabling BitLocker (can take a minute)");
             var result = BitLocker.Enable();
             var parts = result.StdOut.Trim().Split('|');
             var volume = parts.Length > 0 ? parts[0].Trim() : string.Empty;

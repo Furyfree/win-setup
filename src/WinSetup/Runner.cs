@@ -55,6 +55,48 @@ public static class Runner
         }
     }
 
+    public static RunResult RunStreaming(string file, string[] args, string prefix = "      ")
+    {
+        var startInfo = Create(file, args);
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+        try
+        {
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"failed to start {file}");
+            var stdout = new System.Text.StringBuilder();
+            var stderr = new System.Text.StringBuilder();
+            process.OutputDataReceived += (_, line) =>
+            {
+                if (line.Data is null)
+                {
+                    return;
+                }
+
+                stdout.AppendLine(line.Data);
+                Console.WriteLine(prefix + line.Data);
+            };
+            process.ErrorDataReceived += (_, line) =>
+            {
+                if (line.Data is null)
+                {
+                    return;
+                }
+
+                stderr.AppendLine(line.Data);
+                Console.WriteLine(prefix + line.Data);
+            };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+            process.WaitForExit();
+            return new(process.ExitCode, stdout.ToString(), stderr.ToString());
+        }
+        catch (Win32Exception exception)
+        {
+            return new(-1, string.Empty, exception.Message);
+        }
+    }
+
     public static string? Find(params string[] candidates) => candidates.FirstOrDefault(File.Exists);
 
     private static ProcessStartInfo Create(string file, string[] args)

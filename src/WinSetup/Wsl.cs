@@ -51,7 +51,7 @@ public static class Wsl
             fi
             """;
         var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(script));
-        return Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "bash", "-c", $"echo {encoded} | base64 -d | bash"]);
+        return Runner.RunStreaming(Exe, ["-d", DefaultDistro, "-u", "root", "bash", "-c", $"echo {encoded} | base64 -d | bash"]);
     }
 
     public static bool RebootPending() =>
