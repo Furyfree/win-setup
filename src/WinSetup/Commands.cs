@@ -277,7 +277,24 @@ public static class Commands
             }
             else if (Wsl.DistroInstalled())
             {
-                Console.WriteLine("ok    Fedora WSL installed");
+                if (Wsl.Provisioned())
+                {
+                    Console.WriteLine("ok    Fedora WSL provisioned");
+                }
+                else
+                {
+                    Console.WriteLine("set   provisioning Fedora WSL (packages + Chezmoi)");
+                    var provision = Wsl.Provision();
+                    if (provision.Ok)
+                    {
+                        Console.WriteLine("ok    Fedora WSL provisioned");
+                    }
+                    else
+                    {
+                        failures.Add($"wsl provision ({provision.Hex})");
+                        Console.WriteLine($"FAIL  wsl provision ({provision.Hex}) {provision.StdErr.Trim()}");
+                    }
+                }
             }
             else if (Wsl.RebootPending())
             {

@@ -21,6 +21,27 @@ public static class Wsl
     public static bool DistroInstalled() =>
         Runner.Run(Exe, ["--list", "--quiet"]).StdOut.Contains("Fedora", StringComparison.OrdinalIgnoreCase);
 
+    public static bool Provisioned() =>
+        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c", "test -d \"$HOME/.local/share/chezmoi\""]).Ok;
+
+    public static RunResult Provision()
+    {
+        var data = $$"""
+            {"Machine":"{{Environment.MachineName}}","ManagedByNimbus":false,"onePasswordSsh":false,"Profiles":["development"]}
+            """;
+        var script = $$"""
+            set -e
+            dnf install -y chezmoi git zsh
+            user=$(getent passwd 1000 | cut -d: -f1)
+            home=$(getent passwd 1000 | cut -d: -f6)
+            if [ ! -d "$home/.local/share/chezmoi" ]; then
+              runuser -u "$user" -- chezmoi init --apply --override-data '{{data}}' https://github.com/Furyfree/dotfiles.git
+            fi
+            """;
+        var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(script));
+        return Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "bash", "-c", $"echo {encoded} | base64 -d | bash"]);
+    }
+
     public static bool RebootPending() =>
         Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending") is not null
         || Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") is not null;
