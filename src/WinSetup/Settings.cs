@@ -11,16 +11,9 @@ public record Setting(
     string Name,
     object Value,
     RegistryValueKind Kind,
-    int? ByteIndex = null)
+    int? ByteIndex = null,
+    bool IgnoreTimestamps = false)
 {
-    private static readonly byte[] SunsetToSunrise =
-    [
-        0x43, 0x42, 0x01, 0x00, 0x0A, 0x02, 0x01, 0x00, 0x2A, 0x06, 0x92, 0xC5, 0xB6, 0xD5, 0x06,
-        0x2A, 0x2B, 0x0E, 0x1F, 0x43, 0x42, 0x01, 0x00, 0x02, 0x01, 0xCA, 0x14, 0x00, 0xCA, 0x1E,
-        0x00, 0xCF, 0x28, 0x90, 0x35, 0xCA, 0x32, 0x0E, 0x13, 0x2E, 0x17, 0x00, 0xCA, 0x3C, 0x0E,
-        0x07, 0x2E, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00,
-    ];
-
     public static readonly Setting[] All =
     [
         // Taskbar
@@ -77,7 +70,8 @@ public record Setting(
         new("Disable the finish-setting-up prompt", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0, RegistryValueKind.DWord),
 
         // Night light
-        new("Night light schedule: sunset to sunrise", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\DefaultAccount\Current\default$windows.data.bluelightreduction.settings\windows.data.bluelightreduction.settings", "Data", SunsetToSunrise, RegistryValueKind.Binary),
+        new("Night light schedule: sunset to sunrise", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\DefaultAccount\Current\default$windows.data.bluelightreduction.settings\windows.data.bluelightreduction.settings", "Data", NightLightScheduleNow(), RegistryValueKind.Binary, IgnoreTimestamps: true),
+        new("Night light on", "HKCU", @"Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\DefaultAccount\Current\default$windows.data.bluelightreduction.bluelightreductionstate\windows.data.bluelightreduction.bluelightreductionstate", "Data", NightLightStateNow(), RegistryValueKind.Binary, IgnoreTimestamps: true),
 
         // System
         new("Enable location services", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location", "Value", "Allow", RegistryValueKind.String),
@@ -104,6 +98,87 @@ public record Setting(
         new("Disable mouse acceleration threshold 2", "HKCU", @"Control Panel\Mouse", "MouseThreshold2", "0", RegistryValueKind.String),
     ];
 
+    public static byte[] NightLightScheduleNow() => BuildNightLightSchedule(NowUnix());
+
+    public static byte[] NightLightStateNow()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var filetime = (ulong)((now.UtcDateTime - DateTime.UnixEpoch).Ticks + 116444736000000000L);
+        return BuildNightLightState(NowUnix(), filetime);
+    }
+
+    public static byte[] BuildNightLightSchedule(ulong unixSeconds)
+    {
+        byte[] inner =
+        [
+            0x43, 0x42, 0x01, 0x00, 0x02, 0x01, 0xCA, 0x14, 0x00, 0xCA, 0x1E, 0x00, 0xCF, 0x28, 0x90,
+            0x35, 0xCA, 0x32, 0x0E, 0x13, 0x2E, 0x17, 0x00, 0xCA, 0x3C, 0x0E, 0x07, 0x2E, 0x0C, 0x00,
+            0x00,
+        ];
+        return Wrap(unixSeconds, inner);
+    }
+
+    public static byte[] BuildNightLightState(ulong unixSeconds, ulong filetime)
+    {
+        var inner = new List<byte> { 0x43, 0x42, 0x01, 0x00, 0x10, 0x00, 0xD0, 0x0A, 0x02, 0xC6, 0x14 };
+        WriteVarint(inner, filetime);
+        inner.Add(0x00);
+        return Wrap(unixSeconds, [.. inner]);
+    }
+
+    private static byte[] Wrap(ulong unixSeconds, byte[] inner)
+    {
+        var blob = new List<byte> { 0x43, 0x42, 0x01, 0x00, 0x0A, 0x02, 0x01, 0x00, 0x2A, 0x06 };
+        WriteVarint(blob, unixSeconds);
+        blob.AddRange([0x2A, 0x2B, 0x0E, (byte)inner.Length]);
+        blob.AddRange(inner);
+        blob.AddRange([0x00, 0x00, 0x00]);
+        return [.. blob];
+    }
+
+    private static void WriteVarint(ICollection<byte> target, ulong value)
+    {
+        while (value >= 0x80)
+        {
+            target.Add((byte)((value & 0x7F) | 0x80));
+            value >>= 7;
+        }
+
+        target.Add((byte)value);
+    }
+
+    private static ulong NowUnix() => (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+    private static byte[] NormalizeTimestamps(byte[] blob)
+    {
+        // ponytail: zeroes the envelope timestamp and the state FILETIME so the shell's own rewrites compare equal.
+        var copy = (byte[])blob.Clone();
+        ZeroVarintAfter(copy, 0x2A, 0x06);
+        ZeroVarintAfter(copy, 0xC6, 0x14);
+        return copy;
+    }
+
+    private static void ZeroVarintAfter(byte[] data, byte first, byte second)
+    {
+        for (var i = 0; i + 2 < data.Length; i++)
+        {
+            if (data[i] != first || data[i + 1] != second)
+            {
+                continue;
+            }
+
+            var j = i + 2;
+            while (j < data.Length - 1 && (data[j] & 0x80) != 0)
+            {
+                data[j] = 0;
+                j++;
+            }
+
+            data[j] = 0;
+            return;
+        }
+    }
+
     public SettingState Check()
     {
         if (!OperatingSystem.IsWindows())
@@ -125,6 +200,9 @@ public record Setting(
         return Kind switch
         {
             RegistryValueKind.DWord or RegistryValueKind.QWord => Convert.ToInt64(current) == Convert.ToInt64(Value),
+            RegistryValueKind.Binary when ByteIndex is null && IgnoreTimestamps => current is byte[] currentBlob
+                && Value is byte[] targetBlob
+                && NormalizeTimestamps(currentBlob).AsSpan().SequenceEqual(NormalizeTimestamps(targetBlob)),
             RegistryValueKind.Binary when ByteIndex is null => current is byte[] actual
                 && Value is byte[] expected
                 && actual.AsSpan().SequenceEqual(expected),

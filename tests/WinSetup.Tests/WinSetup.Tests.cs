@@ -104,6 +104,17 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Night_light_blobs_match_ignoring_timestamps()
+    {
+        var schedule = new Setting("why", "HKCU", @"Software\Test", "Data", Setting.BuildNightLightSchedule(1700000000), Microsoft.Win32.RegistryValueKind.Binary, IgnoreTimestamps: true);
+        Assert.True(schedule.Matches(Setting.BuildNightLightSchedule(1800000000)));
+        Assert.False(schedule.Matches(Setting.BuildNightLightState(1800000000, 134000000000000000)));
+
+        var state = new Setting("why", "HKCU", @"Software\Test", "Data", Setting.BuildNightLightState(1700000000, 133000000000000000), Microsoft.Win32.RegistryValueKind.Binary, IgnoreTimestamps: true);
+        Assert.True(state.Matches(Setting.BuildNightLightState(1800000000, 134000000000000000)));
+    }
+
+    [Fact]
     public void Settings_are_unique_and_labeled()
     {
         var keys = Setting.All.Select(setting => $"{setting.Hive}\\{setting.Key}\\{setting.Name}").ToArray();
