@@ -215,11 +215,16 @@ public static class Commands
         {
             var result = BitLocker.Enable();
             var parts = result.StdOut.Trim().Split('|');
+            var volume = parts.Length > 0 ? parts[0].Trim() : string.Empty;
             var protection = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-            if (result.Ok && (protection.Equals("On", StringComparison.OrdinalIgnoreCase)
-                || protection.Equals("EncryptionInProgress", StringComparison.OrdinalIgnoreCase)))
+            var protecting = protection.Equals("On", StringComparison.OrdinalIgnoreCase)
+                || volume.Equals("EncryptionInProgress", StringComparison.OrdinalIgnoreCase);
+            if (result.Ok && protecting)
             {
-                Console.WriteLine($"set   protection {protection}");
+                var state = protection.Equals("On", StringComparison.OrdinalIgnoreCase)
+                    ? $"protection {protection}"
+                    : $"{volume}, protection {protection}";
+                Console.WriteLine($"set   {state}");
             }
             else
             {
@@ -231,6 +236,7 @@ public static class Commands
         var keyWritten = File.Exists(BitLocker.KeyFile);
 
         Console.WriteLine("== chezmoi ==");
+        Paths.RefreshPath();
         if (Chezmoi.IsInitialized())
         {
             Console.WriteLine("applying chezmoi configuration");

@@ -42,6 +42,7 @@ unless a game actually needs them.
 | --- | --- | --- | --- |
 | PowerShell 7 | WinGet | `Microsoft.PowerShell` | Package: win-setup, config: Chezmoi |
 | Windows Terminal | WinGet / Windows | `Microsoft.WindowsTerminal` | Package: win-setup, config: Chezmoi |
+| VSCodium | WinGet | `VSCodium.VSCodium` | Package: win-setup, config/extensions: Chezmoi |
 | Git for Windows | WinGet | `Git.Git` | Package: win-setup, config: Chezmoi |
 | GitHub CLI | WinGet | `GitHub.cli` | win-setup |
 | Chezmoi | WinGet | `twpayne.chezmoi` | win-setup bootstrap |

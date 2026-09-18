@@ -73,6 +73,8 @@ public record Setting(
         new("Store the hardware clock as UTC (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", "RealTimeIsUniversal", 1, RegistryValueKind.DWord),
         new("Disable Fast Startup (dual boot; reboot)", "HKLM", @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, RegistryValueKind.DWord),
         new("Lock when the screen turns off (reboot)", "HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs", 300, RegistryValueKind.DWord),
+        new("Allow PowerShell scripts for Chezmoi hooks", "HKLM", @"SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell", "ExecutionPolicy", "RemoteSigned", RegistryValueKind.String),
+        new("Allow PowerShell 7 scripts for Chezmoi hooks", "HKLM", @"SOFTWARE\Microsoft\PowerShellCore\ShellIds\Microsoft.PowerShell", "ExecutionPolicy", "RemoteSigned", RegistryValueKind.String),
         new("Pin feature updates to 25H2", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "TargetReleaseVersion", 1, RegistryValueKind.DWord),
         new("Pin feature updates to 25H2 (version)", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "TargetReleaseVersionInfo", "25H2", RegistryValueKind.String),
         new("Pin feature updates to 25H2 (product)", "HKLM", @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", "ProductVersion", "Windows 11", RegistryValueKind.String),
