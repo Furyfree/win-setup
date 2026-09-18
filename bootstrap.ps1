@@ -38,7 +38,21 @@ Write-Host "Downloading $($asset.browser_download_url)"
 Invoke-WebRequest -UseBasicParsing $asset.browser_download_url -OutFile $exe
 Unblock-File -Path $exe
 
-& $exe status
+$installDir = Join-Path $env:LOCALAPPDATA 'Programs\win-setup'
+$installed = Join-Path $installDir 'win-setup.exe'
+New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+Copy-Item -Path $exe -Destination $installed -Force
+Unblock-File -Path $installed
+
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if (($userPath -split ';') -notcontains $installDir) {
+    $newPath = (@($userPath, $installDir) | Where-Object { $_ } ) -join ';'
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+    Write-Host "Added $installDir to the user PATH (new terminals)."
+}
+$env:Path = "$env:Path;$installDir"
+
+& $installed status
 if (-not $SkipApply) {
-    & $exe apply
+    & $installed apply
 }
