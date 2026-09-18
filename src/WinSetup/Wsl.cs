@@ -22,7 +22,8 @@ public static class Wsl
         Clean(Runner.Run(Exe, ["--list", "--quiet"])).Contains("Fedora", StringComparison.OrdinalIgnoreCase);
 
     public static bool Provisioned() =>
-        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c", "test -d \"$HOME/.local/share/chezmoi\""]).Ok;
+        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
+            "test -f \"$HOME/.config/chezmoi/chezmoi.toml\" && test -d \"$HOME/.local/share/chezmoi/.git\""]).Ok;
 
     public static RunResult Provision()
     {
@@ -34,7 +35,10 @@ public static class Wsl
             dnf install -y chezmoi git zsh
             user=$(getent passwd 1000 | cut -d: -f1)
             home=$(getent passwd 1000 | cut -d: -f6)
-            if [ ! -d "$home/.local/share/chezmoi" ]; then
+            if [ ! -f "$home/.config/chezmoi/chezmoi.toml" ]; then
+              if [ -d "$home/.local/share/chezmoi" ] && [ ! -d "$home/.local/share/chezmoi/.git" ]; then
+                rm -rf "$home/.local/share/chezmoi"
+              fi
               runuser -u "$user" -- chezmoi init --apply --override-data '{{data}}' https://github.com/Furyfree/dotfiles.git
             fi
             """;
