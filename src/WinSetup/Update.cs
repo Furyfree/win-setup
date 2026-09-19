@@ -59,7 +59,7 @@ public static class Update
             }
 
             var target = Path.Combine(Path.GetTempPath(), $"win-setup-{tag}.exe");
-            using (var download = client.GetStreamAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult())
+            using (var download = client.GetStreamAsync(url).GetAwaiter().GetResult())
             using (var file = File.Create(target))
             {
                 download.CopyTo(file);
