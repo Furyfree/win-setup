@@ -38,7 +38,7 @@ public static class Update
         try
         {
             EnsureInstalled();
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("win-setup");
             var json = client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest").GetAwaiter().GetResult();
 
@@ -49,25 +49,32 @@ public static class Update
                 return null;
             }
 
-            var url = release.RootElement.GetProperty("assets").EnumerateArray()
-                .Where(asset => asset.GetProperty("name").GetString() == "win-setup.exe")
-                .Select(asset => asset.GetProperty("browser_download_url").GetString())
-                .FirstOrDefault(link => !string.IsNullOrEmpty(link));
+            var asset = release.RootElement.GetProperty("assets").EnumerateArray()
+                .FirstOrDefault(item => item.GetProperty("name").GetString() == "win-setup.exe");
+            var url = asset.GetProperty("browser_download_url").GetString();
+            var expectedSize = asset.GetProperty("size").GetInt64();
             if (url is null)
             {
                 return null;
             }
 
             var target = Path.Combine(Path.GetTempPath(), $"win-setup-{tag}.exe");
-            using (var download = client.GetStreamAsync(url).GetAwaiter().GetResult())
+            using (var download = client.GetStreamAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult())
             using (var file = File.Create(target))
             {
                 download.CopyTo(file);
             }
 
+            if (new FileInfo(target).Length != expectedSize)
+            {
+                File.Delete(target);
+                return null;
+            }
+
             Console.WriteLine($"Updating win-setup to {tag}...");
-            var executable = ReplaceInstalled(target);
-            return Runner.RunInteractive(executable, args.Length > 0 ? args : ["apply"]);
+            var exitCode = Runner.RunInteractive(target, args.Length > 0 ? args : ["apply"]);
+            ScheduleReplace(target);
+            return exitCode;
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException or IOException or UnauthorizedAccessException or InvalidOperationException)
         {
@@ -131,31 +138,34 @@ public static class Update
         }
     }
 
-    private static string ReplaceInstalled(string downloaded)
+    // ponytail: a detached cmd retries until this process releases the installed exe; renaming it breaks single-file assembly loading.
+    private static void ScheduleReplace(string downloaded)
     {
         if (!OperatingSystem.IsWindows())
         {
-            return downloaded;
+            return;
         }
 
         try
         {
-            var old = InstalledExe + ".old";
-            File.Move(InstalledExe, old, overwrite: true);
-            File.Copy(downloaded, InstalledExe, overwrite: true);
-            try
+            var script = Path.Combine(Path.GetTempPath(), "win-setup-replace.cmd");
+            File.WriteAllText(script,
+                "@echo off\r\n" +
+                "for /l %%i in (1,1,30) do (\r\n" +
+                $"  copy /y \"{downloaded}\" \"{InstalledExe}\" >nul 2>&1 && exit /b\r\n" +
+                "  timeout /t 1 /nobreak >nul\r\n" +
+                ")\r\n");
+            var startInfo = new ProcessStartInfo("cmd.exe")
             {
-                File.Delete(old);
-            }
-            catch (IOException)
-            {
-            }
-
-            return InstalledExe;
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            startInfo.ArgumentList.Add("/c");
+            startInfo.ArgumentList.Add(script);
+            Process.Start(startInfo);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            return downloaded;
         }
     }
 }
