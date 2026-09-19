@@ -39,31 +39,14 @@ public static class Runner
         }
     }
 
-    public static int RunInteractive(string file, string[] args, string? label = null)
+    public static int RunInteractive(string file, string[] args)
     {
         var startInfo = Create(file, args);
         startInfo.CreateNoWindow = false;
         try
         {
             using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"failed to start {file}");
-            if (label is null || Console.IsErrorRedirected)
-            {
-                process.WaitForExit();
-                return process.ExitCode;
-            }
-
-            var stopwatch = Stopwatch.StartNew();
-            var spinner = Task.Run(async () =>
-            {
-                while (!process.HasExited)
-                {
-                    Console.Error.Write(("\r      " + $"{label} {stopwatch.Elapsed.TotalSeconds:0}s...").PadRight(79));
-                    await Task.Delay(500);
-                }
-            });
             process.WaitForExit();
-            spinner.Wait();
-            Console.Error.Write("\r".PadRight(80) + "\r");
             return process.ExitCode;
         }
         catch (Win32Exception)

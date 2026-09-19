@@ -235,7 +235,7 @@ public static class Commands
             {
                 Console.WriteLine($"inst  {package.Name}");
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs(), package.Name);
+                var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs());
                 stopwatch.Stop();
                 var result = Packages.Classify(exit);
                 if (Packages.IsPresent(result))
@@ -433,7 +433,28 @@ public static class Commands
             Console.WriteLine("A reboot is required to finish one or more package installs.");
         }
 
+        ResetConsole();
         return failures.Count == 0 ? 0 : 1;
+    }
+
+    // ponytail: PowerShell writes the prompt before PSReadLine reads; winget can leave SGR/cursor/OSC progress state that hides it.
+    private static void ResetConsole()
+    {
+        if (Console.IsErrorRedirected)
+        {
+            return;
+        }
+
+        try
+        {
+            Console.CursorVisible = true;
+        }
+        catch (IOException)
+        {
+        }
+
+        Console.Error.Write("\x1b[0m\x1b[?25h\x1b]9;4;0\x1b\\");
+        Console.Error.Flush();
     }
 
     private static string Describe(bool? value) => value switch
