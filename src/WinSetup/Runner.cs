@@ -57,13 +57,13 @@ public static class Runner
             {
                 while (!process.HasExited)
                 {
-                    Console.Error.Write($"\r      {label} {stopwatch.Elapsed.TotalSeconds:0}s...");
+                    Console.Error.Write(("\r      " + $"{label} {stopwatch.Elapsed.TotalSeconds:0}s...").PadRight(79));
                     await Task.Delay(500);
                 }
             });
             process.WaitForExit();
             spinner.Wait();
-            Console.Error.Write("\r" + new string(' ', 64) + "\r");
+            Console.Error.Write("\r".PadRight(80) + "\r");
             return process.ExitCode;
         }
         catch (Win32Exception)

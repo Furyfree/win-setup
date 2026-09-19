@@ -198,7 +198,7 @@ public static class Commands
             checkedCount++;
             if (!Console.IsErrorRedirected)
             {
-                Console.Error.Write($"\r      {checkedCount}/{Packages.All.Length} {package.Name}   ");
+                Console.Error.Write(("\r      " + $"{checkedCount}/{Packages.All.Length} {package.Name}").PadRight(79));
             }
 
             try
@@ -221,7 +221,7 @@ public static class Commands
 
         if (!Console.IsErrorRedirected)
         {
-            Console.Error.Write("\r" + new string(' ', 64) + "\r");
+            Console.Error.Write("\r".PadRight(80) + "\r");
         }
 
         if (present.Count > 0)
