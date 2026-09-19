@@ -30,7 +30,49 @@ public static class Update
     public static int RunApply(string[] args)
     {
         EnsureInstalled();
-        return TryRestartWithLatest(args) ? 0 : Commands.Apply();
+        return Commands.Apply();
+    }
+
+    public static int? RestartIfNewer(string[] args)
+    {
+        try
+        {
+            EnsureInstalled();
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("win-setup");
+            var json = client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest").GetAwaiter().GetResult();
+
+            using var release = JsonDocument.Parse(json);
+            var tag = release.RootElement.GetProperty("tag_name").GetString() ?? string.Empty;
+            if (!IsNewer(CurrentVersion, tag))
+            {
+                return null;
+            }
+
+            var url = release.RootElement.GetProperty("assets").EnumerateArray()
+                .Where(asset => asset.GetProperty("name").GetString() == "win-setup.exe")
+                .Select(asset => asset.GetProperty("browser_download_url").GetString())
+                .FirstOrDefault(link => !string.IsNullOrEmpty(link));
+            if (url is null)
+            {
+                return null;
+            }
+
+            var target = Path.Combine(Path.GetTempPath(), $"win-setup-{tag}.exe");
+            using (var download = client.GetStreamAsync(url).GetAwaiter().GetResult())
+            using (var file = File.Create(target))
+            {
+                download.CopyTo(file);
+            }
+
+            Console.WriteLine($"Updating win-setup to {tag}...");
+            var executable = ReplaceInstalled(target);
+            return Runner.RunInteractive(executable, args.Length > 0 ? args : ["apply"]);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException or IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     public static bool IsNewer(string current, string latest)
@@ -89,50 +131,31 @@ public static class Update
         }
     }
 
-    public static bool TryRestartWithLatest(string[] args)
+    private static string ReplaceInstalled(string downloaded)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            return downloaded;
+        }
+
         try
         {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("win-setup");
-            var json = client.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest").GetAwaiter().GetResult();
-
-            using var release = JsonDocument.Parse(json);
-            var tag = release.RootElement.GetProperty("tag_name").GetString() ?? string.Empty;
-            if (!IsNewer(CurrentVersion, tag))
+            var old = InstalledExe + ".old";
+            File.Move(InstalledExe, old, overwrite: true);
+            File.Copy(downloaded, InstalledExe, overwrite: true);
+            try
             {
-                return false;
+                File.Delete(old);
+            }
+            catch (IOException)
+            {
             }
 
-            var url = release.RootElement.GetProperty("assets").EnumerateArray()
-                .Where(asset => asset.GetProperty("name").GetString() == "win-setup.exe")
-                .Select(asset => asset.GetProperty("browser_download_url").GetString())
-                .FirstOrDefault(link => !string.IsNullOrEmpty(link));
-            if (url is null)
-            {
-                return false;
-            }
-
-            var target = Path.Combine(Path.GetTempPath(), $"win-setup-{tag}.exe");
-            using (var download = client.GetStreamAsync(url).GetAwaiter().GetResult())
-            using (var file = File.Create(target))
-            {
-                download.CopyTo(file);
-            }
-
-            Console.WriteLine($"Updating win-setup to {tag}...");
-            var startInfo = new ProcessStartInfo(target) { UseShellExecute = false };
-            foreach (var arg in args.Length > 0 ? args : ["apply"])
-            {
-                startInfo.ArgumentList.Add(arg);
-            }
-
-            Process.Start(startInfo);
-            return true;
+            return InstalledExe;
         }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException or IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            return false;
+            return downloaded;
         }
     }
 }

@@ -17,7 +17,8 @@ Every change is detect -> act -> recheck, so a rerun only writes what differs.
 ## What apply does
 
 Before anything else, `apply` checks the latest release and updates itself if a
-newer one exists (v0.1.6 and later).
+newer one exists (v0.1.6 and later). It waits for the updated copy and returns
+its exit code, so the shell only continues once the run is really done.
 
 1. **Settings** - taskbar, snapping, Explorer, ads/suggestions, gaming, mouse,
    power, night light with location, dual-boot clock, feature-update pin.

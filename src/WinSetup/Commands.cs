@@ -433,14 +433,6 @@ public static class Commands
             Console.WriteLine("A reboot is required to finish one or more package installs.");
         }
 
-        try
-        {
-            Console.CursorVisible = true;
-        }
-        catch (IOException)
-        {
-        }
-
         return failures.Count == 0 ? 0 : 1;
     }
 

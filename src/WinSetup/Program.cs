@@ -12,11 +12,21 @@ public static class Program
         return args[0].ToLowerInvariant() switch
         {
             "status" => Commands.Status(),
-            "apply" => WithLog(Update.RunApply, args),
+            "apply" => Apply(args),
             "snapshot" => Snapshot.Run(),
             "version" => Version(),
             _ => Usage(),
         };
+    }
+
+    private static int Apply(string[] args)
+    {
+        if (Update.RestartIfNewer(args) is int exitCode)
+        {
+            return exitCode;
+        }
+
+        return WithLog(Update.RunApply, args);
     }
 
     private static int WithLog(Func<string[], int> action, string[] args)

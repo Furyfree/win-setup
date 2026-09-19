@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace WinSetup;
 
@@ -50,7 +49,6 @@ public static class Runner
             if (label is null || Console.IsErrorRedirected)
             {
                 process.WaitForExit();
-                RestoreConsole();
                 return process.ExitCode;
             }
 
@@ -66,7 +64,6 @@ public static class Runner
             process.WaitForExit();
             spinner.Wait();
             Console.Error.Write("\r".PadRight(80) + "\r");
-            RestoreConsole();
             return process.ExitCode;
         }
         catch (Win32Exception)
@@ -118,46 +115,6 @@ public static class Runner
     }
 
     public static string? Find(params string[] candidates) => candidates.FirstOrDefault(File.Exists);
-
-    // ponytail: winget leaves the console input mode altered; PSReadLine then waits for a key before drawing the prompt.
-    public static void RestoreConsole()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        try
-        {
-            var input = GetStdHandle(-10);
-            if (GetConsoleMode(input, out var inputMode))
-            {
-                SetConsoleMode(input, inputMode | 0x0001 | 0x0002 | 0x0004);
-                FlushConsoleInputBuffer(input);
-            }
-
-            var output = GetStdHandle(-11);
-            if (GetConsoleMode(output, out var outputMode))
-            {
-                SetConsoleMode(output, outputMode | 0x0004);
-            }
-        }
-        catch (Exception)
-        {
-        }
-    }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr GetStdHandle(int handle);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool GetConsoleMode(IntPtr handle, out uint mode);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool SetConsoleMode(IntPtr handle, uint mode);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool FlushConsoleInputBuffer(IntPtr handle);
 
     private static ProcessStartInfo Create(string file, string[] args)
     {
