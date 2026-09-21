@@ -29,7 +29,7 @@ public record Package(string Name, string Id, string Source = "winget", string[]
     }
 }
 
-public enum WingetResult { Installed, Missing, AlreadyInstalled, RebootRequired, Failed }
+public enum WingetResult { Installed, Missing, AlreadyInstalled, RebootRequired, RebootBeforeInstall, Failed }
 
 public static class Packages
 {
@@ -104,11 +104,24 @@ public static class Packages
         unchecked((int)0x8A150061) => WingetResult.AlreadyInstalled,
         unchecked((int)0x8A15010D) => WingetResult.AlreadyInstalled,
         unchecked((int)0x8A150109) => WingetResult.RebootRequired,
-        unchecked((int)0x8A15010A) => WingetResult.RebootRequired,
+        unchecked((int)0x8A15010A) => WingetResult.RebootBeforeInstall,
         unchecked((int)0x8A15010B) => WingetResult.RebootRequired,
         _ => WingetResult.Failed,
     };
 
     public static bool IsPresent(WingetResult result) =>
-        result is WingetResult.Installed or WingetResult.AlreadyInstalled or WingetResult.RebootRequired;
+        result is WingetResult.Installed or WingetResult.AlreadyInstalled;
+
+    public static bool Detect(Package package)
+    {
+        var result = Runner.Run(Paths.Winget, package.DetectArgs);
+        return DetectResult(result);
+    }
+
+    public static bool DetectResult(RunResult result) => Classify(result.ExitCode) switch
+    {
+        WingetResult.Installed => true,
+        WingetResult.Missing => false,
+        _ => throw new InvalidOperationException($"WinGet detection failed ({result.Hex})"),
+    };
 }

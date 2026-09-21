@@ -18,67 +18,88 @@ public static class Wsl
     public static bool FeaturesEnabled() =>
         FeatureEnabled("VirtualMachinePlatform") && FeatureEnabled("Microsoft-Windows-Subsystem-Linux");
 
-    public static bool DistroInstalled() =>
-        Clean(Runner.Run(Exe, ["--list", "--quiet"])).Contains("Fedora", StringComparison.OrdinalIgnoreCase);
+    public static bool DistroInstalled() => HasDistro(Runner.Run(Exe, ["--list", "--quiet"]), DefaultDistro);
+
+    public static bool HasDistro(RunResult result, string name) =>
+        Clean(result).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Contains(name, StringComparer.OrdinalIgnoreCase);
+
+    private static string DefaultUser()
+    {
+        var user = Clean(Runner.Run(Exe, ["-d", DefaultDistro, "--", "id", "-un"])).Trim();
+        if (user.Length == 0 || user == "root")
+        {
+            throw new InvalidOperationException($"Launch {DefaultDistro} and finish non-root user setup, then rerun apply.");
+        }
+
+        return user;
+    }
 
     public static bool Provisioned() =>
-        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
+        Runner.Run(Exe, ["-d", DefaultDistro, "-u", DefaultUser(), "--", "sh", "-c",
             "test -f \"$HOME/.cache/win-setup-wsl-provisioned\""]).Ok;
 
     public static bool ShellIsZsh() =>
-        Runner.Run(Exe, ["-d", DefaultDistro, "--", "sh", "-c",
-            "test \"$(getent passwd 1000 | cut -d: -f7)\" = /bin/zsh"]).Ok;
+        Runner.Run(Exe, ["-d", DefaultDistro, "-u", DefaultUser(), "--", "sh", "-c",
+            "test \"$(getent passwd \"$(id -u)\" | cut -d: -f7)\" = /bin/zsh"]).Ok;
 
     public static RunResult SetZshShell() =>
-        Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "sh", "-c",
-            "chsh -s /bin/zsh \"$(getent passwd 1000 | cut -d: -f1)\""]);
+        Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "--", "chsh", "-s", "/bin/zsh", DefaultUser()]);
 
-    public static RunResult Provision()
-    {
-        var script = $$"""
-            set -e
-            dnf install -y chezmoi fastfetch git zsh
-            user=$(getent passwd 1000 | cut -d: -f1)
-            home=$(getent passwd 1000 | cut -d: -f6)
-            machine="{{Environment.MachineName}}"
-            src="$home/.local/share/chezmoi"
-            cfg="$home/.config/chezmoi/chezmoi.toml"
-            log="$home/.cache/win-setup-wsl.log"
-            mkdir -p "$home/.cache" "$home/.config/chezmoi"
-            chown -R "$user:" "$home/.cache" "$home/.config"
-            if [ ! -f "$cfg" ]; then
-              if [ -d "$src" ] && [ ! -d "$src/.git" ]; then
-                rm -rf "$src"
-              fi
-              if [ ! -d "$src" ]; then
-                runuser -u "$user" -- git clone --depth 1 https://github.com/Furyfree/dotfiles.git "$src"
-              fi
-              cat > "$cfg" <<EOF
-            [diff]
-            exclude = ["scripts"]
+    public const string ProvisionScript = """
+        set -eu
+        user=$1
+        machine=$2
+        entry=$(getent passwd "$user")
+        uid=$(printf '%s' "$entry" | cut -d: -f3)
+        user_home=$(printf '%s' "$entry" | cut -d: -f6)
+        case "$uid" in ''|*[!0-9]*|0) echo 'A non-root Linux user is required.' >&2; exit 1;; esac
+        case "$user_home" in /|/*/../*|'') echo 'Invalid Linux home.' >&2; exit 1;; /*) ;; *) exit 1;; esac
+        [ -d "$user_home" ] || { echo 'Linux home does not exist.' >&2; exit 1; }
+        dnf install -y chezmoi fastfetch git zsh
+        runuser -u "$user" -- sh -s -- "$user_home" "$machine" <<'USER_SCRIPT'
+        set -eu
+        user_home=$1
+        machine=$2
+        src="$user_home/.local/share/chezmoi"
+        cfg="$user_home/.config/chezmoi/chezmoi.toml"
+        log="$user_home/.cache/win-setup-wsl.log"
+        mkdir -p "$user_home/.cache" "$user_home/.config/chezmoi"
+        if [ ! -e "$cfg" ]; then
+          if [ -e "$src" ] && [ ! -d "$src/.git" ]; then
+            echo "Existing Chezmoi source preserved at $src; initialize it manually before rerunning." >&2
+            exit 1
+          fi
+          if [ ! -d "$src" ]; then
+            git clone --depth 1 https://github.com/Furyfree/dotfiles.git "$src"
+          fi
+          # Noclobber protects an existing config, including a dangling symlink.
+          (set -C; cat > "$cfg" <<CONFIG
+        [diff]
+        exclude = ["scripts"]
 
-            [data]
-            Machine = "$machine"
-            fastmailUsername = ""
-            ManagedByNimbus = false
-            onePasswordSsh = false
-            Profiles = ["common", "development"]
-            profiles = ["common", "unix", "linux", "development"]
-            EOF
-              chown "$user:" "$cfg"
-            fi
-            if ! runuser -u "$user" -- chezmoi --no-tty apply --exclude=scripts </dev/null >"$log" 2>&1; then
-              echo "chezmoi apply failed; last log lines:"
-              tail -30 "$log"
-              exit 1
-            fi
-            tail -3 "$log"
-            runuser -u "$user" -- touch "$home/.cache/win-setup-wsl-provisioned"
-            echo "note: config files applied; run scripts skipped. Install mise and run 'chezmoi apply' in WSL for tools."
-            """;
-        var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(script));
-        return Runner.RunStreaming(Exe, ["-d", DefaultDistro, "-u", "root", "bash", "-c", $"echo {encoded} | base64 -d | bash"]);
-    }
+        [data]
+        Machine = "$machine"
+        fastmailUsername = ""
+        ManagedByNimbus = false
+        onePasswordSsh = false
+        Profiles = ["common", "development"]
+        profiles = ["common", "unix", "linux", "development"]
+        CONFIG
+          )
+        fi
+        if ! chezmoi --no-tty apply --exclude=scripts </dev/null >"$log" 2>&1; then
+          echo "chezmoi apply failed; see $log" >&2
+          exit 1
+        fi
+        touch "$user_home/.cache/win-setup-wsl-provisioned"
+        echo "note: config files applied; run scripts skipped. Install mise and run 'chezmoi apply' in WSL for tools."
+        USER_SCRIPT
+        """;
+
+    public static RunResult Provision() =>
+        Runner.RunStreaming(Exe, ["-d", DefaultDistro, "-u", "root", "--", "sh", "-c", ProvisionScript,
+            "win-setup", DefaultUser(), Environment.MachineName]);
 
     public static bool RebootPending() =>
         Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending") is not null
@@ -115,45 +136,96 @@ public static class Wsl
     public static RunResult InstallDistro()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(ImageFile)!);
-        if (!File.Exists(ImageFile))
-        {
-            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("win-setup");
-            using var download = client.GetStreamAsync(ImageUrl).GetAwaiter().GetResult();
-            using var file = File.Create(ImageFile);
-            download.CopyTo(file);
-        }
-
+        using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("win-setup");
+        // Old caches may contain interrupted downloads from previous versions.
+        DownloadImage(client, ImageUrl, ImageFile);
         var install = Runner.Run(Exe, ["--install", "--from-file", ImageFile, "--no-launch"]);
-        if (!install.Ok)
-        {
-            return install;
-        }
-
-        var name = FirstDistro();
-        if (name is not null)
-        {
-            Runner.Run(Exe, ["--set-default", name]);
-            Runner.Run(Exe,
-            [
-                "-d", name, "-u", "root", "sh", "-c",
-                "grep -q '^systemd=true' /etc/wsl.conf 2>/dev/null || printf '[boot]\\nsystemd=true\\n' >> /etc/wsl.conf",
-            ]);
-            Runner.Run(Exe, ["--terminate", name]);
-        }
-
-        return install;
+        return install.Ok ? ConfigureDistro() : install;
     }
 
-    private static string? FirstDistro() =>
-        Clean(Runner.Run(Exe, ["--list", "--quiet"]))
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .FirstOrDefault();
+    public static void DownloadImage(HttpClient client, string url, string destination)
+    {
+        var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".part";
+        try
+        {
+            using var response = client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
+            response.EnsureSuccessStatusCode();
+            using (var download = response.Content.ReadAsStream())
+            using (var file = new FileStream(temporary, FileMode.CreateNew))
+            {
+                download.CopyTo(file);
+                if (file.Length == 0 || (response.Content.Headers.ContentLength is long expected && file.Length != expected))
+                {
+                    throw new IOException("Incomplete WSL image download.");
+                }
+            }
 
-    // ponytail: wsl.exe writes UTF-16; when the pipe decodes as UTF-8 every ASCII char has a NUL byte.
-    private static string Clean(RunResult result) => result.StdOut.Replace("\0", string.Empty);
+            File.Move(temporary, destination, overwrite: true);
+        }
+        finally
+        {
+            File.Delete(temporary);
+        }
+    }
 
-    private static bool FeatureEnabled(string name) =>
-        Runner.Run(Dism, ["/online", "/Get-FeatureInfo", $"/FeatureName:{name}"])
-            .StdOut.Contains("State : Enabled", StringComparison.OrdinalIgnoreCase);
+    public static RunResult ConfigureDistro()
+    {
+        if (!DistroInstalled())
+        {
+            return new RunResult(1, string.Empty, $"{DefaultDistro} is not installed.");
+        }
+
+        var result = Runner.Run(Exe, ["--set-default", DefaultDistro]);
+        if (!result.Ok)
+        {
+            return result;
+        }
+
+        // Preserve other WSL settings and only restart when systemd needs enabling.
+        result = Runner.Run(Exe, ["-d", DefaultDistro, "-u", "root", "--", "sh", "-c",
+            SystemdScript, "win-setup", "/etc/wsl.conf"]);
+        return result.Ok && result.StdOut.Trim() == "changed"
+            ? Runner.Run(Exe, ["--terminate", DefaultDistro])
+            : result;
+    }
+
+    public const string SystemdScript = """
+            set -eu
+            file=$1
+            if [ -f "$file" ] && awk '
+              /^\[/ { boot = ($0 ~ /^\[boot\][[:space:]]*$/) }
+              boot && /^[[:space:]]*systemd[[:space:]]*=[[:space:]]*true[[:space:]]*$/ { found=1 }
+              END { exit !found }
+            ' "$file"; then exit 0; fi
+            tmp=$(mktemp "$file.XXXXXX")
+            trap 'rm -f "$tmp"' EXIT
+            touch "$file"
+            awk '
+              /^\[boot\][[:space:]]*$/ { boot=1; seen=1; print; print "systemd=true"; next }
+              /^\[/ { boot=0 }
+              boot && /^[[:space:]]*systemd[[:space:]]*=/ { next }
+              { print }
+              END { if (!seen) print "[boot]\nsystemd=true" }
+            ' "$file" > "$tmp"
+            cat "$tmp" > "$file"
+            echo changed
+            """;
+
+    private static string Clean(RunResult result)
+    {
+        if (!result.Ok)
+        {
+            throw new InvalidOperationException($"WSL command failed ({result.Hex}): {result.StdErr.Trim()}");
+        }
+
+        // wsl.exe writes UTF-16; a UTF-8 pipe decoder leaves NUL bytes between ASCII characters.
+        return result.StdOut.Replace("\0", string.Empty);
+    }
+
+    private static bool FeatureEnabled(string name)
+    {
+        var result = Runner.Run(Dism, ["/online", "/English", "/Get-FeatureInfo", $"/FeatureName:{name}"]);
+        return Clean(result).Contains("State : Enabled", StringComparison.OrdinalIgnoreCase);
+    }
 }

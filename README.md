@@ -1,85 +1,74 @@
 # win-setup
 
-Small Windows 11 setup utility for this workstation. One executable, exact
-WinGet IDs, no state database. Chezmoi owns dotfiles; win-setup owns the machine.
+Personal Windows 11 Pro setup utility. It installs apps through WinGet,
+changes Windows settings, enables BitLocker and provisions Fedora WSL.
+Chezmoi manages application configuration in each system's user home.
 
-## Commands
+## Install
 
-| Command | Does |
-| --- | --- |
-| `win-setup status` | Read-only drift check. Exit 0 clean, 1 drift. |
-| `win-setup apply` | Needs elevation. Applies settings, installs packages, enables BitLocker, runs Chezmoi. Safe to rerun. |
-| `win-setup snapshot` | Read-only machine-state bundle for review. |
-| `win-setup version` | Prints the version. |
-
-Every change is detect -> act -> recheck, so a rerun only writes what differs.
-
-## What apply does
-
-Before anything else, `apply` checks the latest release and updates itself if a
-newer one exists (v0.1.6 and later). It waits for the updated copy and returns
-its exit code, so the shell only continues once the run is really done.
-
-1. **Settings** - taskbar, snapping, Explorer, ads/suggestions, gaming, mouse,
-   power, night light with location, dual-boot clock, feature-update pin.
-   Already-correct values are skipped.
-2. **Packages** - exact IDs from `Packages.cs` via WinGet. Never fuzzy matches,
-   never uninstalls, never upgrades an existing install.
-3. **BitLocker** - TPM protector plus a recovery password written to
-   `%USERPROFILE%\bitlocker-recovery-<host>.txt`. Move that file into 1Password
-   from another device: a key that only exists on the encrypted disk is useless
-   if the machine will not boot.
-4. **WSL** - enables the WSL features (reboot), installs Fedora with systemd
-   and sets it as the default distribution.
-5. **Chezmoi** - installs it if missing. If the dotfiles are already
-   initialized it runs `chezmoi apply`; otherwise it prints the one-time
-   bootstrap. Run this once in a normal terminal (Git and GitHub
-   authentication must be available), answer its prompts, and every later
-   `apply` keeps the dotfiles updated:
-
-   ```powershell
-   chezmoi init --apply https://github.com/Furyfree/dotfiles.git
-   ```
-
-   Chezmoi stays usable on its own: `chezmoi status`, `chezmoi diff`, and
-   `chezmoi apply` work directly.
-
-## WSL
-
-`apply` enables the WSL features (reboot if newly enabled), installs Fedora
-(`FedoraLinux-44`) with systemd as the default distribution, then provisions
-it: chezmoi, git and zsh plus a non-interactive `chezmoi init --apply` with
-the `development` profile. WSL has its own Linux home, independent of the
-Windows Chezmoi setup.
-
-Fedora enforces password quality: if `passwd` inside WSL rejects a password,
-relax it in `/etc/security/pwquality.conf` (`minlen = 1`, `dictcheck = 0`) or
-pick a longer one.
-
-## Bootstrap
-
-Fresh install entry point:
+After Windows setup and driver installation, run in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/Furyfree/win-setup/main/bootstrap.ps1 | iex
 ```
 
-It downloads the latest release to `%LOCALAPPDATA%\Programs\win-setup`, adds
-that directory to the user PATH, runs `status`, then requests elevation for
-`apply`. Open a new terminal afterwards and `win-setup status|apply|snapshot`
-work directly.
+Bootstrap downloads the latest release to
+`%LOCALAPPDATA%\Programs\win-setup`, adds it to your PATH, runs `status`,
+then requests elevation for `apply`. Open a new terminal to use the commands.
+See [Installation](docs/INSTALLATION.md) for preparing the Windows media.
 
-## Build and test
+## Use
 
-```bash
-dotnet test
-dotnet publish src/WinSetup -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+```powershell
+win-setup status    # inspect settings and packages; 0 clean, 1 drift/error
+win-setup apply     # elevated terminal; check for updates, then apply setup
+win-setup snapshot  # export machine state to ~/win-setup-snapshot
+win-setup version
 ```
 
-## Docs
+`apply` preserves installed packages and checks completed installations.
+After a requested reboot, rerun it to finish setup. Logs are in
+`%LOCALAPPDATA%\win-setup\apply.log`. Snapshot exports may contain personal
+paths and machine details; review them before sharing.
 
-- [Specification](docs/SPEC.md)
-- [Packages](docs/PACKAGES.md)
-- [Configuration](docs/CONFIGS.md)
-- [Installation history](docs/INSTALLATION.md)
-- [Tasks](docs/TASKS.md)
+Move `%USERPROFILE%\bitlocker-recovery-<host>.txt` into 1Password from
+another device. A recovery key stored only on the encrypted PC cannot help
+when that PC fails to boot.
+
+See [Packages.cs](src/WinSetup/Packages.cs) for installed apps and
+[Settings.cs](src/WinSetup/Settings.cs) for Windows preferences.
+
+## Chezmoi and WSL
+
+Initialize Windows dotfiles once in a normal terminal with Git and GitHub
+authentication available:
+
+```powershell
+chezmoi init --apply https://github.com/Furyfree/dotfiles.git
+```
+
+Later runs of `apply` invoke `chezmoi apply`. Chezmoi also works independently.
+
+WSL setup may need a reboot. After Fedora installs, launch `FedoraLinux-44`,
+finish creating its non-root default user, then rerun `win-setup apply`.
+Setup enables systemd, selects Fedora as the default distribution, installs
+chezmoi/git/zsh/fastfetch and applies the development dotfiles. Existing
+Chezmoi configuration is preserved; an uninitialized local source needs
+manual review. Dotfile scripts are skipped during provisioning: install
+mise and run `chezmoi apply` inside Fedora to finish the Linux tools.
+
+## Build and check
+
+Use the .NET SDK selected by `global.json`:
+
+```sh
+dotnet build
+dotnet test
+dotnet format --verify-no-changes
+markdownlint README.md AGENTS.md docs/*.md
+dotnet publish src/WinSetup -c Release -r win-x64 \
+    --self-contained -p:PublishSingleFile=true
+```
+
+The shell fixtures run on Linux. Real Windows checks remain in
+[TASKS.md](docs/TASKS.md).

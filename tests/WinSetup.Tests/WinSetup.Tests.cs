@@ -10,10 +10,21 @@ public class WingetTests
     [InlineData(unchecked((int)0x8A150061), WingetResult.AlreadyInstalled)]
     [InlineData(unchecked((int)0x8A15010D), WingetResult.AlreadyInstalled)]
     [InlineData(unchecked((int)0x8A150109), WingetResult.RebootRequired)]
-    [InlineData(unchecked((int)0x8A15010A), WingetResult.RebootRequired)]
+    [InlineData(unchecked((int)0x8A15010A), WingetResult.RebootBeforeInstall)]
+    [InlineData(unchecked((int)0x8A15010B), WingetResult.RebootRequired)]
     [InlineData(unchecked((int)0x8A15002B), WingetResult.Failed)]
     public void Classifies_winget_exit_codes(int code, WingetResult expected)
         => Assert.Equal(expected, Packages.Classify(code));
+
+    [Fact]
+    public void Detection_errors_and_pending_reboots_are_not_installed_packages()
+    {
+        Assert.True(Packages.DetectResult(new(0, "", "")));
+        Assert.False(Packages.DetectResult(new(unchecked((int)0x8A150014), "", "")));
+        Assert.Throws<InvalidOperationException>(() => Packages.DetectResult(new(-1, "", "unavailable")));
+        Assert.False(Packages.IsPresent(Packages.Classify(unchecked((int)0x8A15010A))));
+        Assert.False(Packages.IsPresent(Packages.Classify(unchecked((int)0x8A150109))));
+    }
 
     [Fact]
     public void Install_args_are_exact_and_do_not_upgrade()
@@ -156,5 +167,222 @@ public class PowerTests
     {
         var keys = PowerItem.All.Select(item => $"{item.Subgroup}\\{item.Setting}").ToArray();
         Assert.Equal(keys.Length, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+}
+
+[CollectionDefinition("Process state", DisableParallelization = true)]
+public class ProcessStateCollection;
+
+[Collection("Process state")]
+public class SetupRegressionTests
+{
+    [Fact]
+    public void An_apply_io_error_does_not_repeat_the_operation()
+    {
+        using var scratch = new Scratch();
+        var calls = 0;
+        var output = Console.Out;
+        Assert.Throws<IOException>(() => Program.WithLog(_ =>
+        {
+            calls++;
+            throw new IOException("operation failed");
+        }, [], Path.Combine(scratch.Path, "apply.log")));
+        Assert.Equal(1, calls);
+        Assert.Same(output, Console.Out);
+    }
+
+    [Fact]
+    public void An_unavailable_log_still_runs_the_operation_once()
+    {
+        using var scratch = new Scratch();
+        var blocker = Path.Combine(scratch.Path, "file");
+        File.WriteAllText(blocker, "keep");
+        var calls = 0;
+        Assert.Equal(7, Program.WithLog(_ => { calls++; return 7; }, [], Path.Combine(blocker, "apply.log")));
+        Assert.Equal(1, calls);
+        Assert.Equal("keep", File.ReadAllText(blocker));
+    }
+
+    [LinuxFact]
+    public void Apply_on_linux_stops_before_updating_or_logging()
+    {
+        Assert.Equal(2, Program.Main(["apply"]));
+    }
+
+    [Theory]
+    [InlineData("Ubuntu\nFedora-Old\n", "Fedora-Test", false)]
+    [InlineData("Ubuntu\r\nFedora-Test\r\n", "Fedora-Test", true)]
+    [InlineData("Fedora-Test-Backup\n", "Fedora-Test", false)]
+    [InlineData("F\0e\0d\0o\0r\0a\0\r\0\n\0", "Fedora", true)]
+    public void Wsl_matches_the_whole_distribution_name(string output, string target, bool expected)
+        => Assert.Equal(expected, Wsl.HasDistro(new(0, output, ""), target));
+
+    [Fact]
+    public void Wsl_query_failure_is_not_an_absent_distribution()
+        => Assert.Throws<InvalidOperationException>(() => Wsl.HasDistro(new(1, "", "failed"), "Fedora"));
+
+    [LinuxFact]
+    public void Wsl_configures_only_the_selected_distribution_and_propagates_failure()
+    {
+        using var scratch = new Scratch();
+        var events = Path.Combine(scratch.Path, "events");
+        scratch.Command("wsl.exe", """
+            case "$*" in
+              '--list --quiet') printf 'Ubuntu\n%s\n' "$TEST_DISTRO" ;;
+              *) printf '%s\n' "$*" >> "$TEST_EVENTS"
+                 case "$*" in *Ubuntu*) exit 99;; esac
+                 exit 23 ;;
+            esac
+            """);
+        var oldPath = Environment.GetEnvironmentVariable("PATH");
+        var oldEvents = Environment.GetEnvironmentVariable("TEST_EVENTS");
+        var oldDistro = Environment.GetEnvironmentVariable("TEST_DISTRO");
+        try
+        {
+            Environment.SetEnvironmentVariable("PATH", scratch.Path + ":" + oldPath);
+            Environment.SetEnvironmentVariable("TEST_EVENTS", events);
+            Environment.SetEnvironmentVariable("TEST_DISTRO", Wsl.DefaultDistro);
+            Assert.Equal(23, Wsl.ConfigureDistro().ExitCode);
+            var commands = File.ReadAllText(events);
+            Assert.Contains(Wsl.DefaultDistro, commands);
+            Assert.DoesNotContain("Ubuntu", commands);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PATH", oldPath);
+            Environment.SetEnvironmentVariable("TEST_EVENTS", oldEvents);
+            Environment.SetEnvironmentVariable("TEST_DISTRO", oldDistro);
+        }
+    }
+
+    [Theory]
+    [InlineData("complete")]
+    [InlineData("short")]
+    [InlineData("interrupted")]
+    public void Wsl_download_replaces_only_a_complete_image(string mode)
+    {
+        using var scratch = new Scratch();
+        var target = Path.Combine(scratch.Path, "image.wsl");
+        File.WriteAllText(target, "previous image");
+        HttpContent content = mode == "interrupted"
+            ? new StreamContent(new InterruptedDownload())
+            : new ByteArrayContent("download"u8.ToArray());
+        content.Headers.ContentLength = mode == "short" ? 16 : 8;
+        using var client = new HttpClient(new DownloadHandler(content));
+        if (mode == "complete")
+        {
+            Wsl.DownloadImage(client, "https://example.invalid/image", target);
+            Assert.Equal("download", File.ReadAllText(target));
+        }
+        else
+        {
+            Assert.Throws<IOException>(() => Wsl.DownloadImage(client, "https://example.invalid/image", target));
+            Assert.Equal("previous image", File.ReadAllText(target));
+        }
+
+        Assert.Single(Directory.GetFiles(scratch.Path));
+    }
+
+    [LinuxFact]
+    public void Provisioning_preserves_existing_sources_configs_and_unrelated_files()
+    {
+        using var scratch = new Scratch();
+        var userHome = Path.Combine(scratch.Path, "user");
+        var source = Path.Combine(userHome, ".local/share/chezmoi");
+        var config = Path.Combine(userHome, ".config/chezmoi/chezmoi.toml");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(Path.GetDirectoryName(config)!);
+        File.WriteAllText(Path.Combine(source, "keep"), "local source");
+        File.WriteAllText(Path.Combine(userHome, ".config/unrelated"), "personal settings");
+        scratch.Command("getent", "printf 'tester:x:2001:2001::%s:/bin/sh\\n' \"$TEST_USER_HOME\"");
+        scratch.Command("dnf", "exit 0");
+        scratch.Command("runuser", "[ \"$1\" = -u ] && [ \"$2\" = tester ] && [ \"$3\" = -- ] || exit 1\nshift 3\nexec \"$@\"");
+        scratch.Command("chezmoi", "exit 0");
+        scratch.Command("git", "exit 98");
+        scratch.Command("chown", "exit 97");
+        var environment = new Dictionary<string, string>
+        {
+            ["PATH"] = scratch.Path + ":" + Environment.GetEnvironmentVariable("PATH"),
+            ["TEST_USER_HOME"] = userHome,
+        };
+        var args = new[] { "-c", Wsl.ProvisionScript, "win-setup", "tester", "test-machine" };
+        Assert.False(Runner.Run("/bin/sh", args, environment).Ok);
+        Assert.Equal("local source", File.ReadAllText(Path.Combine(source, "keep")));
+        Assert.False(File.Exists(config));
+
+        File.WriteAllText(config, "existing config");
+        Assert.True(Runner.Run("/bin/sh", args, environment).Ok);
+        Assert.True(Runner.Run("/bin/sh", args, environment).Ok);
+        Assert.Equal("existing config", File.ReadAllText(config));
+        Assert.Equal("personal settings", File.ReadAllText(Path.Combine(userHome, ".config/unrelated")));
+        Assert.True(File.Exists(Path.Combine(userHome, ".cache/win-setup-wsl-provisioned")));
+
+        scratch.Command("getent", "printf 'tester:x:0:0::%s:/bin/sh\\n' \"$TEST_USER_HOME\"");
+        var rejected = Runner.Run("/bin/sh", args, environment);
+        Assert.False(rejected.Ok);
+        Assert.Contains("non-root", rejected.StdErr);
+        Assert.Equal("existing config", File.ReadAllText(config));
+    }
+
+    [LinuxFact]
+    public void Enabling_systemd_preserves_other_settings_and_does_not_require_repeated_restarts()
+    {
+        using var scratch = new Scratch();
+        var file = Path.Combine(scratch.Path, "wsl.conf");
+        const string original = "[automount]\nenabled=false\n[boot]\nsystemd=false\ncommand=echo ready\n[user]\ndefault=tester\n";
+        File.WriteAllText(file, original);
+        var args = new[] { "-c", Wsl.SystemdScript, "win-setup", file };
+        var changed = Runner.Run("/bin/sh", args);
+        Assert.True(changed.Ok, changed.StdErr);
+        Assert.Equal("changed", changed.StdOut.Trim());
+        Assert.Equal(original.Replace("systemd=false", "systemd=true"), File.ReadAllText(file));
+        var repeated = Runner.Run("/bin/sh", args);
+        Assert.True(repeated.Ok, repeated.StdErr);
+        Assert.Empty(repeated.StdOut);
+
+        File.Delete(file);
+        Assert.True(Runner.Run("/bin/sh", args).Ok);
+        Assert.Equal("[boot]\nsystemd=true\n", File.ReadAllText(file));
+        Assert.Single(Directory.GetFiles(scratch.Path));
+    }
+
+    private sealed class DownloadHandler(HttpContent content) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = content });
+    }
+
+    private sealed class InterruptedDownload() : MemoryStream("download"u8.ToArray())
+    {
+        public override void CopyTo(Stream destination, int bufferSize)
+        {
+            destination.WriteByte(1);
+            throw new IOException("connection lost");
+        }
+    }
+
+    private sealed class Scratch : IDisposable
+    {
+        public string Path { get; } = Directory.CreateTempSubdirectory("win-setup-test-").FullName;
+
+        public void Command(string name, string script)
+        {
+            var file = System.IO.Path.Combine(Path, name);
+            File.WriteAllText(file, "#!/bin/sh\nset -eu\n" + script + "\n");
+            File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
+        public void Dispose() => Directory.Delete(Path, recursive: true);
+    }
+}
+
+public sealed class LinuxFactAttribute : FactAttribute
+{
+    public LinuxFactAttribute()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            Skip = "Uses Linux shell fixtures; Windows integration is checked separately.";
+        }
     }
 }

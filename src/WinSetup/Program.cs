@@ -21,22 +21,37 @@ public static class Program
 
     private static int Apply(string[] args)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            Console.WriteLine("apply must run on Windows");
+            return 2;
+        }
+
         if (Update.RestartIfNewer(args) is int exitCode)
         {
             return exitCode;
         }
 
-        return WithLog(Update.RunApply, args);
+        return WithLog(Update.RunApply, args, Path.Combine(Paths.LocalAppData, "win-setup", "apply.log"));
     }
 
-    private static int WithLog(Func<string[], int> action, string[] args)
+    public static int WithLog(Func<string[], int> action, string[] args, string path)
     {
-        var path = Path.Combine(Paths.LocalAppData, "win-setup", "apply.log");
+        StreamWriter file;
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            file = new StreamWriter(path, append: false) { AutoFlush = true };
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"Cannot open apply log: {exception.Message}");
+            return action(args);
+        }
+
+        using (file)
+        {
             var console = Console.Out;
-            using var file = new StreamWriter(path, append: false) { AutoFlush = true };
             Console.SetOut(new TeeWriter(console, file));
             try
             {
@@ -48,10 +63,6 @@ public static class Program
                 Console.SetOut(console);
                 Console.WriteLine($"log: {path}");
             }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            return action(args);
         }
     }
 

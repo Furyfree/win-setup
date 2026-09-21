@@ -28,8 +28,25 @@ $installDir = Join-Path $env:LOCALAPPDATA 'Programs\win-setup'
 $installed = Join-Path $installDir 'win-setup.exe'
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 Write-Host "Downloading $($asset.browser_download_url)"
-Invoke-WebRequest -UseBasicParsing $asset.browser_download_url -OutFile $installed
-Unblock-File -Path $installed
+$download = Join-Path $installDir ([IO.Path]::GetRandomFileName())
+try {
+    Invoke-WebRequest -UseBasicParsing $asset.browser_download_url -OutFile $download
+    if ($asset.size -le 0 -or (Get-Item -LiteralPath $download).Length -ne $asset.size) {
+        throw 'Release download is incomplete; the existing installation was preserved.'
+    }
+    Unblock-File -Path $download
+    if (Test-Path -LiteralPath $installed) {
+        [IO.File]::Replace($download, $installed, $null)
+    }
+    else {
+        [IO.File]::Move($download, $installed)
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $download) {
+        Remove-Item -LiteralPath $download -Force
+    }
+}
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if (($userPath -split ';') -notcontains $installDir) {

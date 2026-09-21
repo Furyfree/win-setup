@@ -1,59 +1,41 @@
 # win-setup
 
-Small Windows 11 install utility. `win-setup status` reports machine state;
-`win-setup apply` installs selected apps, applies selected settings, enables
-BitLocker, and hands off to Chezmoi.
+Personal Windows 11 Pro utility: one C# console app and one test project.
+Keep the current structure; the machine supplies state.
 
-This must stay small. No state database, no plan/apply engine, no profiles, no
-resource graph, no DI container, no separate Core/Infrastructure assemblies.
-It is not a Windows Nimbus.
+## Map
 
-## Layout
+- `src/WinSetup/Program.cs`: command dispatch and apply logging.
+- `src/WinSetup/Commands.cs`: status and setup order, summaries and rechecks.
+- `src/WinSetup/Packages.cs`, `Settings.cs`, `Power.cs`: selected apps and
+  settings, detection and writes. Verify new WinGet IDs on Windows.
+- `src/WinSetup/Wsl.cs`: Fedora installation and Linux user provisioning.
+- `src/WinSetup/Update.cs`, `bootstrap.ps1`: self-update and first install.
+- `src/WinSetup/BitLocker.cs`, `Checks.cs`: encryption and host checks.
+- `src/WinSetup/Chezmoi.cs`: Windows dotfile handoff.
+- `src/WinSetup/Runner.cs`, `PowerShell.cs`, `Paths.cs`: process boundaries.
+- `src/WinSetup/Snapshot.cs`, `Notify.cs`: state exports and desktop refresh.
+- `tests/WinSetup.Tests/WinSetup.Tests.cs`: logic and isolated regressions.
+- `docs/INSTALLATION.md`: media preparation; `docs/TASKS.md`: remaining work.
+- `docs/local/`: ignored local reference material; never publish it.
 
-- `src/WinSetup/` - one console app.
-- `tests/WinSetup.Tests/` - pure-logic tests, runnable on Linux.
-- `docs/` - specification, packages, configs, installation history.
-- `docs/local/` - gitignored local reference material, never published.
-- `bootstrap.ps1` - fresh-install entry point.
+## What must not break
 
-## Commands
+Use exact WinGet IDs. Preserve installed apps and existing user files.
+Detect, apply, then recheck; report errors instead of assuming absence.
+Preserve Secure Boot, TPM, Defender, Firewall, UAC, Windows Update and Store.
+Use native registry APIs and supported PowerShell cmdlets. Pass user data as
+arguments or environment variables, never interpolated PowerShell code.
+Keep recovery passwords out of output and logs; save them to the key file
+and remind the user to store it independently of the encrypted PC.
 
-- `dotnet build` / `dotnet test` - validation, works on Fedora.
-- `dotnet publish src/WinSetup -c Release -r win-x64 --self-contained -p:PublishSingleFile=true` - release exe.
-- `win-setup status` -> `win-setup.exe status` on Windows.
-- `win-setup snapshot` writes a read-only machine-state bundle for review.
+Cross-check new Windows settings against
+[WinUtil](https://github.com/ChrisTitusTech/winutil) and
+[Winhance](https://github.com/memstechtips/Winhance).
 
-## Rules
+## Verify
 
-- Packages and settings live as C# records in `Packages.cs` and `Settings.cs`.
-  Do not add JSON/YAML/TOML config files unless editing on the Windows box
-  without a rebuild becomes a real need.
-- `apply` is idempotent: detect, act, re-detect. The machine is the state.
-- Exact WinGet IDs only. Never fuzzy match. Never uninstall.
-- Registry changes go through `Microsoft.Win32.Registry`. PowerShell is only
-  used where cmdlets are the supported interface (BitLocker, TPM, Secure Boot)
-  and never with interpolated data in the command text.
-- Never write secrets or recovery keys to console or logs. The BitLocker
-  recovery key is written to a file and the path is printed in the summary.
-- Tests cover pure logic only: exit-code mapping, JSON parsing, idempotency
-  checks. No live Windows needed in CI.
-- Keep `docs/` honest: if a behavior changes, update the doc that claims it.
-
-## Researching settings and packages
-
-Use these as reference sources when figuring out how to implement a setting or
-what a package is called:
-
-- WinUtil (Chris Titus Tech): https://github.com/ChrisTitusTech/winutil
-- Winhance: https://github.com/memstechtips/Winhance
-
-Cross-check the registry hive/key/name/value against those projects. Verify a
-package ID with `winget search --id <id> --exact` on the real machine before
-adding it. Presence in `docs/PACKAGES.md` does not mean it is implemented.
-
-## Security
-
-- Never commit recovery keys, tokens, passwords, SSH keys, or session data.
-- BitLocker: a recovery key file on the encrypted volume is useless if the
-  machine will not boot; the summary tells the user to move it into 1Password.
-- `docs/SPEC.md` is the authoritative behavior contract.
+Run `dotnet build`, `dotnet test`, `dotnet format --verify-no-changes` and
+`markdownlint README.md AGENTS.md docs/*.md`. `CLAUDE.md` is only an include.
+Tests use temporary files and fake external commands; they cannot establish
+Windows integration. Never run bootstrap or live `apply` as a routine test.

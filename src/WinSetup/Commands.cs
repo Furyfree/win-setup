@@ -27,14 +27,21 @@ public static class Commands
         {
             foreach (var package in Packages.All)
             {
-                var result = Packages.Classify(Runner.Run(Paths.Winget, package.DetectArgs).ExitCode);
-                var present = Packages.IsPresent(result);
-                if (!present)
+                try
+                {
+                    var present = Packages.Detect(package);
+                    if (!present)
+                    {
+                        missing++;
+                    }
+
+                    Console.WriteLine($"{(present ? "ok  " : "miss")} {package.Name} ({package.Id})");
+                }
+                catch (InvalidOperationException exception)
                 {
                     missing++;
+                    Console.WriteLine($"FAIL {package.Name}: {exception.Message}");
                 }
-
-                Console.WriteLine($"{(present ? "ok  " : "miss")} {package.Name} ({package.Id})");
             }
         }
 
@@ -203,7 +210,7 @@ public static class Commands
 
             try
             {
-                if (Packages.IsPresent(Packages.Classify(Runner.Run(Paths.Winget, package.DetectArgs).ExitCode)))
+                if (Packages.Detect(package))
                 {
                     present.Add(package.Name);
                 }
@@ -238,13 +245,25 @@ public static class Commands
                 var exit = Runner.RunInteractive(Paths.Winget, package.InstallArgs());
                 stopwatch.Stop();
                 var result = Packages.Classify(exit);
-                if (Packages.IsPresent(result))
+                if (result is WingetResult.RebootRequired or WingetResult.RebootBeforeInstall)
                 {
-                    Console.WriteLine($"done  {package.Name} ({stopwatch.Elapsed.TotalSeconds:0}s)");
-                    if (result == WingetResult.RebootRequired)
+                    rebootRequired = true;
+                    Console.WriteLine($"todo  reboot and rerun apply to {(result == WingetResult.RebootBeforeInstall ? "install" : "verify")} {package.Name}");
+                    if (result == WingetResult.RebootBeforeInstall)
                     {
-                        rebootRequired = true;
-                        Console.WriteLine($"      reboot needed to finish {package.Name}");
+                        failures.Add($"package: {package.Name} awaits installation after reboot");
+                    }
+                }
+                else if (Packages.IsPresent(result))
+                {
+                    if (Packages.Detect(package))
+                    {
+                        Console.WriteLine($"done  {package.Name} ({stopwatch.Elapsed.TotalSeconds:0}s)");
+                    }
+                    else
+                    {
+                        failures.Add($"package: {package.Name} is still missing after installation");
+                        Console.WriteLine($"FAIL  {package.Name} is still missing after installation");
                     }
                 }
                 else
@@ -315,6 +334,12 @@ public static class Commands
             }
             else if (Wsl.DistroInstalled())
             {
+                var configure = Wsl.ConfigureDistro();
+                if (!configure.Ok)
+                {
+                    throw new InvalidOperationException($"Fedora WSL configuration failed ({configure.Hex}): {configure.StdErr.Trim()}");
+                }
+
                 if (Wsl.Provisioned())
                 {
                     Console.WriteLine("ok    Fedora WSL provisioned");
@@ -372,6 +397,7 @@ public static class Commands
                     if (install.Ok)
                     {
                         Console.WriteLine("inst  Fedora WSL");
+                        Console.WriteLine($"todo  launch {Wsl.DefaultDistro}, finish Linux user setup, then rerun apply");
                     }
                     else
                     {
@@ -408,7 +434,9 @@ public static class Commands
         }
 
         Console.WriteLine();
-        Console.WriteLine(failures.Count == 0 ? "summary: all steps ok" : $"summary: {failures.Count} failed");
+        Console.WriteLine(failures.Count == 0
+            ? rebootRequired ? "summary: reboot and rerun apply" : "summary: all steps ok"
+            : $"summary: {failures.Count} failed");
         foreach (var failure in failures)
         {
             Console.WriteLine($"  {failure}");
@@ -430,7 +458,7 @@ public static class Commands
         if (rebootRequired)
         {
             Console.WriteLine();
-            Console.WriteLine("A reboot is required to finish one or more package installs.");
+            Console.WriteLine("A reboot is required; rerun apply afterwards.");
         }
 
         ResetConsole();
