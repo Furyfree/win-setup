@@ -5,21 +5,20 @@ uses a dedicated 1 TB Samsung 990 PRO; verify the target disk before writing.
 
 ## Prepare the media
 
-The current baseline uses custom media from Chris Titus Tech's paid Win11
-Creator. Keep the tool and generated ISO outside this repository.
+Create the custom Windows media with Win11 Creator in Chris Titus Tech's
+[Windows Toolbox](https://cttstore.com/products/windows-toolbox).
+Win11 Creator is also available in
+[WinUtil](https://github.com/ChrisTitusTech/winutil).
 
-On Fedora, write the ISO to a verified USB device with WoeUSB:
+For WoeUSB on Fedora, use the
+[furyfree/woeusb COPR](https://copr.fedorainfracloud.org/coprs/furyfree/woeusb/).
+See [WoeUSB on GitHub](https://github.com/WoeUSB/WoeUSB) for usage.
 
 ```sh
-pkexec /usr/bin/woeusb --device Win11_Custom.iso /dev/sdX
+sudo woeusb --device Win11_Custom.iso /dev/sdX
 ```
 
-Replace `/dev/sdX` with the USB device. This erases that device.
-
-WoeUSB needs the i386-pc GRUB modules on Fedora. A missing
-`/usr/lib/grub/i386-pc/modinfo.sh` means those modules are absent.
-Stop the USB automounter temporarily if it mounts a partition while WoeUSB
-is writing and causes a mounted-filesystem error.
+Replace `/dev/sdX` with the USB device to erase and write.
 
 ## Install and boot
 
@@ -29,7 +28,7 @@ is writing and causes a mounted-filesystem error.
    let provisioning finish.
 4. Check Windows Update, Defender, Firewall and Store/App Installer, then
    install the hardware drivers.
-5. Follow the [bootstrap instructions](../README.md#install).
+5. Follow the [bootstrap instructions](README.md#install).
 6. Store the BitLocker recovery key outside the PC and check a game.
 
 Do not clear the TPM, replace firmware keys or change storage-controller

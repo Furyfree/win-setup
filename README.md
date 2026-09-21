@@ -15,7 +15,7 @@ irm https://raw.githubusercontent.com/Furyfree/win-setup/main/bootstrap.ps1 | ie
 Bootstrap downloads the latest release to
 `%LOCALAPPDATA%\Programs\win-setup`, adds it to your PATH, runs `status`,
 then requests elevation for `apply`. Open a new terminal to use the commands.
-See [Installation](docs/INSTALLATION.md) for preparing the Windows media.
+See [Installation](INSTALLATION.md) for preparing the Windows media.
 
 ## Use
 
@@ -65,10 +65,10 @@ Use the .NET SDK selected by `global.json`:
 dotnet build
 dotnet test
 dotnet format --verify-no-changes
-markdownlint README.md AGENTS.md docs/*.md
+markdownlint README.md AGENTS.md INSTALLATION.md TASKS.md
 dotnet publish src/WinSetup -c Release -r win-x64 \
     --self-contained -p:PublishSingleFile=true
 ```
 
 The shell fixtures run on Linux. Real Windows checks remain in
-[TASKS.md](docs/TASKS.md).
+[TASKS.md](TASKS.md).

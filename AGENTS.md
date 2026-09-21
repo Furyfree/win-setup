@@ -16,8 +16,7 @@ Keep the current structure; the machine supplies state.
 - `src/WinSetup/Runner.cs`, `PowerShell.cs`, `Paths.cs`: process boundaries.
 - `src/WinSetup/Snapshot.cs`, `Notify.cs`: state exports and desktop refresh.
 - `tests/WinSetup.Tests/WinSetup.Tests.cs`: logic and isolated regressions.
-- `docs/INSTALLATION.md`: media preparation; `docs/TASKS.md`: remaining work.
-- `docs/local/`: ignored local reference material; never publish it.
+- `INSTALLATION.md`: media preparation; `TASKS.md`: remaining work.
 
 ## What must not break
 
@@ -36,6 +35,7 @@ Cross-check new Windows settings against
 ## Verify
 
 Run `dotnet build`, `dotnet test`, `dotnet format --verify-no-changes` and
-`markdownlint README.md AGENTS.md docs/*.md`. `CLAUDE.md` is only an include.
+`markdownlint README.md AGENTS.md INSTALLATION.md TASKS.md`.
+`CLAUDE.md` is only an include.
 Tests use temporary files and fake external commands; they cannot establish
 Windows integration. Never run bootstrap or live `apply` as a routine test.
